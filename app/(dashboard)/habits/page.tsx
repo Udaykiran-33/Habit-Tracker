@@ -91,8 +91,8 @@ export default function HabitsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#f5f5f5]">My Habits</h1>
-          <p className="text-[#888] text-sm mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">My Habits</h1>
+          <p className="text-[#9F9A8C] text-sm mt-1">
             {completedCount}/{habits.length} completed today
           </p>
         </div>
@@ -106,22 +106,22 @@ export default function HabitsPage() {
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#555]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B665A]"
           />
           <input
             type="text"
             placeholder="Search habits…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#141414] border border-[#2a2a2a] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[#f5f5f5] placeholder:text-[#555] focus:outline-none focus:border-[#6b8c3a]"
+            className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a]"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={15} className="text-[#555]" />
+          <Filter size={15} className="text-[#6B665A]" />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-[#141414] border border-[#2a2a2a] rounded-lg px-3 py-2.5 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#6b8c3a]"
+            className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg px-3 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a]"
           >
             <option value="All">All Categories</option>
             {HABIT_CATEGORIES.map((c) => (
@@ -146,7 +146,7 @@ export default function HabitsPage() {
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                 category === cat
                   ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-                  : "bg-[#141414] border-[#2a2a2a] text-[#888] hover:border-[#3a3a3a]"
+                  : "bg-[#1A1A1A] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
               }`}
             >
               {cat} {count > 0 && <span className="ml-1 opacity-60">{count}</span>}
@@ -157,7 +157,7 @@ export default function HabitsPage() {
 
       {/* Habits List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-[#888]">
+        <div className="text-center py-16 text-[#9F9A8C]">
           <p className="text-4xl mb-3">🎯</p>
           <p className="text-sm">
             {habits.length === 0

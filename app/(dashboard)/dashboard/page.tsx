@@ -121,10 +121,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-2xl font-bold text-[#f5f5f5] truncate">
+          <h1 className="text-lg sm:text-2xl font-bold text-[#FAF6F0] truncate">
             Hi, {session?.user?.name?.split(" ")[0] ?? "there"} 👋
           </h1>
-          <p className="text-[#888] text-xs sm:text-sm mt-0.5">
+          <p className="text-[#9F9A8C] text-xs sm:text-sm mt-0.5">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
@@ -135,18 +135,18 @@ export default function DashboardPage() {
 
       {/* XP Bar */}
       {stats && (
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-2.5 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2.5 sm:gap-4">
+        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-2.5 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2.5 sm:gap-4">
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#6b8c3a]/20 rounded-full flex items-center justify-center text-[#8baf48] font-bold text-xs sm:text-sm flex-shrink-0">
             {level}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs sm:text-sm font-medium text-[#f5f5f5] truncate">
+              <span className="text-xs sm:text-sm font-medium text-[#FAF6F0] truncate">
                 Level {level} — {levelTitle}
               </span>
-              <span className="text-[9px] sm:text-xs text-[#888] flex-shrink-0 ml-2">{xp} XP · {xpToNext} to next</span>
+              <span className="text-[9px] sm:text-xs text-[#9F9A8C] flex-shrink-0 ml-2">{xp} XP · {xpToNext} to next</span>
             </div>
-            <div className="h-1.5 bg-[#2a2a2a] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-[#2D2D2A] rounded-full overflow-hidden">
               <div
                 className="h-full bg-[#6b8c3a] rounded-full transition-all duration-500"
                 style={{ width: `${xpProgress}%` }}
@@ -191,15 +191,15 @@ export default function DashboardPage() {
         {/* Habits list */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-sm sm:text-base text-[#f5f5f5]">Today&apos;s Habits</h2>
-            <span className="text-[10px] sm:text-xs text-[#888]">
+            <h2 className="font-semibold text-sm sm:text-base text-[#FAF6F0]">Today&apos;s Habits</h2>
+            <span className="text-[10px] sm:text-xs text-[#9F9A8C]">
               {completedHabits.length}/{habits.length} done
             </span>
           </div>
           {habits.length === 0 ? (
-            <div className="bg-[#141414] border border-[#2a2a2a] border-dashed rounded-xl p-8 sm:p-10 text-center">
-              <Target size={28} className="text-[#333] mx-auto mb-2" />
-              <p className="text-[#888] text-sm">No habits yet</p>
+            <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-8 sm:p-10 text-center">
+              <Target size={28} className="text-[#3D3D3A] mx-auto mb-2" />
+              <p className="text-[#9F9A8C] text-sm">No habits yet</p>
               <Button
                 size="sm"
                 className="mt-3"
@@ -226,27 +226,27 @@ export default function DashboardPage() {
 
         {/* Weekly Chart */}
         <div>
-          <h2 className="font-semibold text-sm sm:text-base text-[#f5f5f5] mb-3">Weekly Progress</h2>
-          <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-3 sm:p-4">
+          <h2 className="font-semibold text-sm sm:text-base text-[#FAF6F0] mb-3">Weekly Progress</h2>
+          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
             {stats?.weekly ? (
               <ResponsiveContainer width="100%" height={170}>
                 <BarChart data={stats.weekly} barCategoryGap="25%">
                   <XAxis
                     dataKey="day"
-                    tick={{ fill: "#888", fontSize: 10 }}
+                    tick={{ fill: "#9F9A8C", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{
-                      background: "#1c1c1c",
-                      border: "1px solid #2a2a2a",
+                      background: "#222222",
+                      border: "1px solid #2D2D2A",
                       borderRadius: "8px",
-                      color: "#f5f5f5",
+                      color: "#FAF6F0",
                       fontSize: "11px",
                     }}
-                    cursor={{ fill: "#1c1c1c" }}
+                    cursor={{ fill: "#222222" }}
                   />
                   <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
                     {stats.weekly.map((entry, i) => (
@@ -254,14 +254,14 @@ export default function DashboardPage() {
                         key={i}
                         fill={entry.day === new Date().toLocaleDateString("en-US", { weekday: "short" })
                           ? "#6b8c3a"
-                          : "#2a2a2a"}
+                          : "#2D2D2A"}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[170px] flex items-center justify-center text-[#888] text-sm">
+              <div className="h-[170px] flex items-center justify-center text-[#9F9A8C] text-sm">
                 No data yet
               </div>
             )}
@@ -269,8 +269,8 @@ export default function DashboardPage() {
 
           {/* Streak leaderboard */}
           {habits.filter((h) => h.streak > 0).length > 0 && (
-            <div className="mt-3 sm:mt-4 bg-[#141414] border border-[#2a2a2a] rounded-xl p-3 sm:p-4">
-              <h3 className="text-xs sm:text-sm font-medium text-[#f5f5f5] mb-2 sm:mb-3">🔥 Active Streaks</h3>
+            <div className="mt-3 sm:mt-4 bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
+              <h3 className="text-xs sm:text-sm font-medium text-[#FAF6F0] mb-2 sm:mb-3">🔥 Active Streaks</h3>
               <div className="space-y-1.5 sm:space-y-2">
                 {habits
                   .filter((h) => h.streak > 0)
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                     <div key={h.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: h.color }} />
-                        <span className="text-xs sm:text-sm text-[#888] truncate">{h.name}</span>
+                        <span className="text-xs sm:text-sm text-[#9F9A8C] truncate">{h.name}</span>
                       </div>
                       <span className="text-[10px] sm:text-xs font-semibold text-orange-400 flex-shrink-0 ml-2">{h.streak}d 🔥</span>
                     </div>

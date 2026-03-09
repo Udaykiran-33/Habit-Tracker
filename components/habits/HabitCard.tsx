@@ -54,8 +54,8 @@ export default function HabitCard({
       className={cn(
         "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all",
         completedToday
-          ? "bg-[#1a2010] border-[#6b8c3a]/50"
-          : "bg-[#141414] border-[#2a2a2a] hover:border-[#3a3a3a]"
+          ? "bg-[#1C2412] border-[#6b8c3a]/50"
+          : "bg-[#1A1A1A] border-[#2D2D2A] hover:border-[#3D3D3A]"
       )}
     >
       {/* Color dot */}
@@ -68,7 +68,7 @@ export default function HabitCard({
       <button
         onClick={handleToggle}
         disabled={loading}
-        className="flex-shrink-0 text-[#888] hover:text-[#8baf48] transition-colors disabled:opacity-50"
+        className="flex-shrink-0 text-[#9F9A8C] hover:text-[#8baf48] transition-colors disabled:opacity-50"
       >
         {completedToday ? (
           <CheckCircle2 size={20} className="text-[#6b8c3a] sm:w-[22px] sm:h-[22px]" />
@@ -82,14 +82,14 @@ export default function HabitCard({
         <p
           className={cn(
             "font-medium text-[13px] sm:text-sm truncate",
-            completedToday ? "text-[#8baf48]" : "text-[#f5f5f5]"
+            completedToday ? "text-[#8baf48]" : "text-[#FAF6F0]"
           )}
         >
           {habit.name}
         </p>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
           <Badge label={habit.category} variant="gray" />
-          <span className="text-[10px] sm:text-xs text-[#555]">{habit.frequency}</span>
+          <span className="text-[10px] sm:text-xs text-[#6B665A]">{habit.frequency}</span>
         </div>
       </div>
 
@@ -105,7 +105,7 @@ export default function HabitCard({
       <div className="relative flex-shrink-0">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="text-[#888] hover:text-[#f5f5f5] transition-all p-1 sm:p-1.5 rounded-lg hover:bg-[#1c1c1c] lg:opacity-0 lg:group-hover:opacity-100"
+          className="text-[#9F9A8C] hover:text-[#FAF6F0] transition-all p-1 sm:p-1.5 rounded-lg hover:bg-[#222222] lg:opacity-0 lg:group-hover:opacity-100"
         >
           <MoreVertical size={14} className="sm:w-[15px] sm:h-[15px]" />
         </button>
@@ -115,12 +115,12 @@ export default function HabitCard({
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute right-0 top-7 z-20 bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg shadow-xl py-1 w-36">
+            <div className="absolute right-0 top-7 z-20 bg-[#222222] border border-[#2D2D2A] rounded-lg shadow-xl py-1 w-36">
               <button
                 onClick={() => { onEdit(habit); setMenuOpen(false); }}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#f5f5f5] hover:bg-[#2a2a2a] transition-colors"
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#FAF6F0] hover:bg-[#2D2D2A] transition-colors"
               >
-                <Pencil size={13} className="text-[#888]" /> Edit
+                <Pencil size={13} className="text-[#9F9A8C]" /> Edit
               </button>
               <button
                 onClick={() => { onDelete(habit.id); setMenuOpen(false); }}

@@ -111,7 +111,7 @@ export default function CalendarPage() {
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw size={20} className="text-[#6b8c3a] animate-spin" />
-          <span className="text-[#888] text-sm">Loading calendar…</span>
+          <span className="text-[#9F9A8C] text-sm">Loading calendar…</span>
         </div>
       </div>
     );
@@ -120,8 +120,8 @@ export default function CalendarPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-[#f5f5f5]">Calendar</h1>
-        <p className="text-[#888] text-sm mt-1">Your habit history at a glance</p>
+        <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">Calendar</h1>
+        <p className="text-[#9F9A8C] text-sm mt-1">Your habit history at a glance</p>
       </div>
 
       {/* Habit selector */}
@@ -131,7 +131,7 @@ export default function CalendarPage() {
           className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
             selectedHabit === "all"
               ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-              : "bg-[#141414] border-[#2a2a2a] text-[#888] hover:border-[#444]"
+              : "bg-[#1A1A1A] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
           }`}
         >
           All Habits
@@ -143,7 +143,7 @@ export default function CalendarPage() {
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
               selectedHabit === h.id
                 ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-                : "bg-[#141414] border-[#2a2a2a] text-[#888] hover:border-[#444]"
+                : "bg-[#1A1A1A] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
             }`}
           >
             <div
@@ -156,10 +156,10 @@ export default function CalendarPage() {
       </div>
 
       {/* Activity Heatmap — Binary green/black */}
-      <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+      <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[#f5f5f5]">Activity in the past year</h3>
-          <span className="text-[10px] text-[#555]">
+          <h3 className="text-sm font-semibold text-[#FAF6F0]">Activity in the past year</h3>
+          <span className="text-[10px] text-[#6B665A]">
             {heatmapData.filter((d) => d.active).length} active days
           </span>
         </div>
@@ -174,7 +174,7 @@ export default function CalendarPage() {
                 return (
                   <span
                     key={`${label}-${col}`}
-                    className="text-[10px] text-[#555] inline-block"
+                    className="text-[10px] text-[#6B665A] inline-block"
                     style={{ width: `${span * 14}px` }}
                   >
                     {label}
@@ -210,7 +210,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Legend — Binary */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#555]">
+        <div className="flex items-center gap-2 mt-3 text-xs text-[#6B665A]">
           <span>No activity</span>
           <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#1a1a1a" }} />
           <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#6b8c3a" }} />
@@ -219,19 +219,19 @@ export default function CalendarPage() {
       </div>
 
       {/* Monthly Calendar */}
-      <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5">
+      <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
         {/* Navigation */}
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#888] hover:text-[#f5f5f5] transition-colors"
+            className="p-2 rounded-lg hover:bg-[#2D2D2A] text-[#9F9A8C] hover:text-[#FAF6F0] transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
-          <h3 className="text-sm font-semibold text-[#f5f5f5]">{monthName}</h3>
+          <h3 className="text-sm font-semibold text-[#FAF6F0]">{monthName}</h3>
           <button
             onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-            className="p-2 rounded-lg hover:bg-[#2a2a2a] text-[#888] hover:text-[#f5f5f5] transition-colors disabled:opacity-30"
+            className="p-2 rounded-lg hover:bg-[#2D2D2A] text-[#9F9A8C] hover:text-[#FAF6F0] transition-colors disabled:opacity-30"
             disabled={new Date(year, month + 1, 1) > new Date()}
           >
             <ChevronRight size={16} />
@@ -241,7 +241,7 @@ export default function CalendarPage() {
         {/* Day labels */}
         <div className="grid grid-cols-7 gap-1 mb-1">
           {days.map((d) => (
-            <div key={d} className="text-center text-[10px] sm:text-xs text-[#555] py-1 font-medium">
+            <div key={d} className="text-center text-[10px] sm:text-xs text-[#6B665A] py-1 font-medium">
               {d}
             </div>
           ))}
@@ -267,12 +267,12 @@ export default function CalendarPage() {
                   isFuture
                     ? "text-[#333]"
                     : isCompleted && isToday
-                    ? "bg-[#6b8c3a] text-white ring-2 ring-[#8baf48] ring-offset-1 ring-offset-[#141414]"
+                    ? "bg-[#6b8c3a] text-white ring-2 ring-[#8baf48] ring-offset-1 ring-offset-[#1A1A1A]"
                     : isCompleted
                     ? "bg-[#6b8c3a] text-white"
                     : isToday
-                    ? "border border-[#6b8c3a] text-[#f5f5f5] bg-[#1c1c1c]"
-                    : "text-[#888] hover:bg-[#1c1c1c]"
+                    ? "border border-[#6b8c3a] text-[#FAF6F0] bg-[#222222]"
+                    : "text-[#9F9A8C] hover:bg-[#222222]"
                 }`}
               >
                 {day}
@@ -282,7 +282,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Calendar legend */}
-        <div className="flex items-center justify-center gap-4 mt-4 text-xs text-[#555]">
+        <div className="flex items-center justify-center gap-4 mt-4 text-xs text-[#6B665A]">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded bg-[#6b8c3a]" />
             <span>Completed</span>
@@ -292,7 +292,7 @@ export default function CalendarPage() {
             <span>Today</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-[#1c1c1c]" />
+            <div className="w-3 h-3 rounded bg-[#222222]" />
             <span>No activity</span>
           </div>
         </div>

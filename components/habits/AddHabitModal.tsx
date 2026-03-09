@@ -87,14 +87,14 @@ export default function AddHabitModal({
 
         {/* Category */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#f5f5f5]">Category</label>
+          <label className="text-sm font-medium text-[#FAF6F0]">Category</label>
           <select
             value={form.category}
             onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-sm text-[#f5f5f5] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a]"
+            className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg px-4 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a]"
           >
             {HABIT_CATEGORIES.map((c) => (
-              <option key={c} value={c} className="bg-[#1c1c1c]">
+              <option key={c} value={c} className="bg-[#1A1A1A]">
                 {c}
               </option>
             ))}
@@ -103,7 +103,7 @@ export default function AddHabitModal({
 
         {/* Frequency */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#f5f5f5]">Frequency</label>
+          <label className="text-sm font-medium text-[#FAF6F0]">Frequency</label>
           <div className="flex flex-wrap gap-2">
             {FREQUENCIES.map((f) => (
               <button
@@ -113,7 +113,7 @@ export default function AddHabitModal({
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                   form.frequency === f
                     ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-                    : "bg-[#1c1c1c] border-[#2a2a2a] text-[#888] hover:border-[#3a3a3a]"
+                    : "bg-[#222222] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
                 }`}
               >
                 {f}
@@ -124,7 +124,7 @@ export default function AddHabitModal({
 
         {/* Color */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#f5f5f5]">Color</label>
+          <label className="text-sm font-medium text-[#FAF6F0]">Color</label>
           <div className="flex gap-2">
             {OLIVE_COLORS.map((c) => (
               <button
@@ -132,7 +132,7 @@ export default function AddHabitModal({
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, color: c }))}
                 className={`w-7 h-7 rounded-full border-2 transition-all ${
-                  form.color === c ? "border-white scale-110" : "border-transparent"
+                  form.color === c ? "border-[#FAF6F0] scale-110" : "border-transparent"
                 }`}
                 style={{ backgroundColor: c }}
               />

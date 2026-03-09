@@ -31,8 +31,8 @@ export default function LoginPage() {
         toast.error("Invalid email or password");
       } else if (result?.ok) {
         toast.success("Welcome back!");
-        router.refresh();
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
+        return;
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -46,16 +46,16 @@ export default function LoginPage() {
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
         <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-          <Flame size={16} className="text-white" />
+          <Flame size={16} className="text-[#FAF6F0]" />
         </div>
-        <span className="text-white font-bold text-xl">
+        <span className="text-[#FAF6F0] font-bold text-xl">
           Ur<span className="text-[#8baf48]">Habit</span>
         </span>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#f5f5f5]">Welcome back</h2>
-        <p className="text-[#888] mt-1 text-sm">
+        <h2 className="text-2xl font-bold text-[#FAF6F0]">Welcome back</h2>
+        <p className="text-[#9F9A8C] mt-1 text-sm">
           Sign in to continue your streak
         </p>
       </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#888] mt-6">
+      <p className="text-center text-sm text-[#9F9A8C] mt-6">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"

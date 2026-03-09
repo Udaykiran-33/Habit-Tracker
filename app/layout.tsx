@@ -27,19 +27,19 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-[#f5f5f5]`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#111111] text-[#FAF6F0]`}
       >
         {children}
         <Toaster
           position="top-right"
           toastOptions={{
             style: {
-              background: "#141414",
-              color: "#f5f5f5",
-              border: "1px solid #2a2a2a",
+              background: "#1A1A1A",
+              color: "#FAF6F0",
+              border: "1px solid #2D2D2A",
             },
             success: {
-              iconTheme: { primary: "#6b8c3a", secondary: "#f5f5f5" },
+              iconTheme: { primary: "#6b8c3a", secondary: "#FAF6F0" },
             },
           }}
         />

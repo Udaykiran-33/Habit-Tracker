@@ -23,27 +23,27 @@ export default function StatsCard({
       className={cn(
         "rounded-xl border p-3 sm:p-4 lg:p-5 flex flex-col gap-1 sm:gap-2",
         accent
-          ? "bg-[#1a2010] border-[#6b8c3a]/40"
-          : "bg-[#141414] border-[#2a2a2a]"
+          ? "bg-[#1C2412] border-[#6b8c3a]/40"
+          : "bg-[#1A1A1A] border-[#2D2D2A]"
       )}
     >
       <div className="flex items-center justify-between gap-1">
-        <p className="text-[11px] sm:text-sm text-[#888] font-medium leading-tight">{label}</p>
+        <p className="text-[11px] sm:text-sm text-[#9F9A8C] font-medium leading-tight">{label}</p>
         <div
           className={cn(
             "p-1.5 sm:p-2 rounded-lg flex-shrink-0",
-            accent ? "bg-[#6b8c3a]/20" : "bg-[#1c1c1c]"
+            accent ? "bg-[#6b8c3a]/20" : "bg-[#222222]"
           )}
         >
           <Icon
             size={14}
-            className={cn("sm:w-4 sm:h-4", accent ? "text-[#8baf48]" : "text-[#888]")}
+            className={cn("sm:w-4 sm:h-4", accent ? "text-[#8baf48]" : "text-[#9F9A8C]")}
           />
         </div>
       </div>
       <div>
-        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#f5f5f5] leading-none">{value}</p>
-        {sub && <p className="text-[10px] sm:text-xs text-[#888] mt-0.5 sm:mt-1">{sub}</p>}
+        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#FAF6F0] leading-none">{value}</p>
+        {sub && <p className="text-[10px] sm:text-xs text-[#9F9A8C] mt-0.5 sm:mt-1">{sub}</p>}
       </div>
       {trend !== undefined && (
         <p

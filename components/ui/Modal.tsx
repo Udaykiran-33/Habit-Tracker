@@ -38,7 +38,7 @@ export default function Modal({
     >
       <div
         className={cn(
-          "relative w-full bg-[#141414] border border-[#2a2a2a] rounded-2xl shadow-2xl",
+          "relative w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-2xl shadow-2xl",
           {
             "max-w-sm": size === "sm",
             "max-w-lg": size === "md",
@@ -47,11 +47,11 @@ export default function Modal({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2a2a2a]">
-          <h2 className="text-base font-semibold text-[#f5f5f5]">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2D2D2A]">
+          <h2 className="text-base font-semibold text-[#FAF6F0]">{title}</h2>
           <button
             onClick={onClose}
-            className="text-[#888] hover:text-[#f5f5f5] transition-colors"
+            className="text-[#9F9A8C] hover:text-[#FAF6F0] transition-colors"
           >
             <X size={18} />
           </button>

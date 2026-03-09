@@ -54,12 +54,13 @@ export default function RegisterPage() {
 
       if (result?.ok) {
         toast.success("Account created! Welcome to UrHabit 🔥");
-        router.refresh();
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
+        return;
       } else {
         // Registration succeeded but auto-login failed; redirect to login
         toast.success("Account created! Please sign in.");
-        router.push("/login");
+        window.location.href = "/login";
+        return;
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -73,16 +74,16 @@ export default function RegisterPage() {
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
         <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-          <Flame size={16} className="text-white" />
+          <Flame size={16} className="text-[#FAF6F0]" />
         </div>
-        <span className="text-white font-bold text-xl">
+        <span className="text-[#FAF6F0] font-bold text-xl">
           Ur<span className="text-[#8baf48]">Habit</span>
         </span>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#f5f5f5]">Start your journey</h2>
-        <p className="text-[#888] mt-1 text-sm">
+        <h2 className="text-2xl font-bold text-[#FAF6F0]">Start your journey</h2>
+        <p className="text-[#9F9A8C] mt-1 text-sm">
           Create your account and begin tracking today
         </p>
       </div>
@@ -129,7 +130,7 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#888] mt-6">
+      <p className="text-center text-sm text-[#9F9A8C] mt-6">
         Already have an account?{" "}
         <Link
           href="/login"

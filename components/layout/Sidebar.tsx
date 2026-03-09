@@ -45,18 +45,18 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0d0d0d] border-b border-[#1e1e1e] flex items-center justify-between px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#151515] border-b border-[#2D2D2A] flex items-center justify-between px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-7 h-7 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-            <Flame size={14} className="text-white" />
+            <Flame size={14} className="text-[#FAF6F0]" />
           </div>
-          <span className="text-[#f5f5f5] font-bold text-base tracking-tight">
+          <span className="text-[#FAF6F0] font-bold text-base tracking-tight">
             Ur<span className="text-[#8baf48]">Habit</span>
           </span>
         </Link>
         <button
           onClick={() => setOpen((v) => !v)}
-          className="p-2 rounded-lg text-[#888] hover:text-[#f5f5f5] hover:bg-[#1c1c1c] transition-colors"
+          className="p-2 rounded-lg text-[#9F9A8C] hover:text-[#FAF6F0] hover:bg-[#222222] transition-colors"
         >
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -73,18 +73,18 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen w-60 bg-[#0d0d0d] border-r border-[#1e1e1e] flex flex-col z-40 transition-transform duration-300",
+          "fixed left-0 top-0 h-screen w-60 bg-[#151515] border-r border-[#2D2D2A] flex flex-col z-40 transition-transform duration-300",
           "lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo */}
-        <div className="px-5 py-6 border-b border-[#1e1e1e]">
+        <div className="px-5 py-6 border-b border-[#2D2D2A]">
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-              <Flame size={16} className="text-white" />
+              <Flame size={16} className="text-[#FAF6F0]" />
             </div>
-            <span className="text-[#f5f5f5] font-bold text-lg tracking-tight">
+            <span className="text-[#FAF6F0] font-bold text-lg tracking-tight">
               Ur<span className="text-[#8baf48]">Habit</span>
             </span>
           </Link>
@@ -102,7 +102,7 @@ export default function Sidebar() {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                   active
                     ? "bg-[#6b8c3a]/20 text-[#8baf48] border border-[#6b8c3a]/30"
-                    : "text-[#888] hover:text-[#f5f5f5] hover:bg-[#1c1c1c]"
+                    : "text-[#9F9A8C] hover:text-[#FAF6F0] hover:bg-[#222222]"
                 )}
               >
                 <Icon size={16} />
@@ -113,10 +113,10 @@ export default function Sidebar() {
         </nav>
 
         {/* Sign out */}
-        <div className="px-3 py-4 border-t border-[#1e1e1e]">
+        <div className="px-3 py-4 border-t border-[#2D2D2A]">
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#888] hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#9F9A8C] hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
             <LogOut size={16} />
             Sign Out

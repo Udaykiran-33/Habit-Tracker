@@ -217,7 +217,7 @@ export default function AchievementsPage() {
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-[#888] text-sm">Loading achievements…</div>
+        <div className="text-[#9F9A8C] text-sm">Loading achievements…</div>
       </div>
     );
   }
@@ -225,8 +225,8 @@ export default function AchievementsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-[#f5f5f5]">Achievements</h1>
-        <p className="text-[#888] text-sm mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">Achievements</h1>
+        <p className="text-[#9F9A8C] text-sm mt-1">
           {unlocked}/{achievements.length} unlocked
         </p>
       </div>
@@ -238,17 +238,17 @@ export default function AchievementsPage() {
             <span className="text-xl sm:text-2xl font-bold text-[#8baf48]">{level}</span>
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-[#f5f5f5]">{levelTitle}</h2>
+            <h2 className="text-lg font-bold text-[#FAF6F0]">{levelTitle}</h2>
             <div className="flex items-center gap-3 mt-1">
-              <div className="flex-1 h-2 bg-[#2a2a2a] rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-[#2D2D2A] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[#6b8c3a] rounded-full transition-all"
                   style={{ width: `${xpProgress}%` }}
                 />
               </div>
-              <span className="text-xs text-[#888] flex-shrink-0">{xp} XP</span>
+              <span className="text-xs text-[#9F9A8C] flex-shrink-0">{xp} XP</span>
             </div>
-            <p className="text-xs text-[#888] mt-1">
+            <p className="text-xs text-[#9F9A8C] mt-1">
               {level * 100 - xp} XP to Level {level + 1}
             </p>
           </div>
@@ -265,12 +265,12 @@ export default function AchievementsPage() {
                   className={`w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold mb-1 border ${
                     reached
                       ? "bg-[#6b8c3a] border-[#6b8c3a] text-white"
-                      : "bg-[#1c1c1c] border-[#2a2a2a] text-[#555]"
+                      : "bg-[#222222] border-[#2D2D2A] text-[#6B665A]"
                   }`}
                 >
                   {lvl}
                 </div>
-                <p className="text-[9px] text-[#555] leading-tight">{title}</p>
+                <p className="text-[9px] text-[#6B665A] leading-tight">{title}</p>
               </div>
             );
           })}
@@ -291,9 +291,9 @@ export default function AchievementsPage() {
               className={`rounded-xl border p-4 transition-all ${
                 a.unlocked
                   ? `border-opacity-100 ${c.border}`
-                  : "border-[#2a2a2a] opacity-60"
+                  : "border-[#2D2D2A] opacity-60"
               }`}
-              style={{ backgroundColor: a.unlocked ? c.bg : "#141414" }}
+              style={{ backgroundColor: a.unlocked ? c.bg : "#1A1A1A" }}
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-2xl">{a.unlocked ? a.icon : "🔒"}</span>
@@ -301,7 +301,7 @@ export default function AchievementsPage() {
                   className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
                     a.unlocked
                       ? `${c.text} border-current bg-current/10`
-                      : "text-[#555] border-[#2a2a2a]"
+                      : "text-[#6B665A] border-[#2D2D2A]"
                   }`}
                 >
                   {a.type.toUpperCase()}
@@ -309,23 +309,23 @@ export default function AchievementsPage() {
               </div>
               <h3
                 className={`font-semibold text-sm mb-1 ${
-                  a.unlocked ? "text-[#f5f5f5]" : "text-[#555]"
+                  a.unlocked ? "text-[#FAF6F0]" : "text-[#6B665A]"
                 }`}
               >
                 {a.title}
               </h3>
-              <p className="text-xs text-[#888] leading-relaxed mb-3">
+              <p className="text-xs text-[#9F9A8C] leading-relaxed mb-3">
                 {a.description}
               </p>
 
               {/* Progress bar */}
               {a.target && !a.unlocked && (
                 <div className="mt-auto">
-                  <div className="flex items-center justify-between text-xs text-[#555] mb-1">
+                  <div className="flex items-center justify-between text-xs text-[#6B665A] mb-1">
                     <span>{a.progress}</span>
                     <span>{a.target}</span>
                   </div>
-                  <div className="h-1 bg-[#2a2a2a] rounded-full overflow-hidden">
+                  <div className="h-1 bg-[#2D2D2A] rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full"
                       style={{

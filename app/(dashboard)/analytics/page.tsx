@@ -181,10 +181,10 @@ export default function AnalyticsPage() {
   }
 
   const tooltipStyle = {
-    background: "#1c1c1c",
-    border: "1px solid #2a2a2a",
+    background: "#222222",
+    border: "1px solid #2D2D2A",
     borderRadius: "8px",
-    color: "#f5f5f5",
+    color: "#FAF6F0",
     fontSize: "12px",
     padding: "8px 12px",
   };
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <RefreshCw size={20} className="text-[#6b8c3a] animate-spin" />
-          <span className="text-[#888] text-sm">Loading analytics…</span>
+          <span className="text-[#9F9A8C] text-sm">Loading analytics…</span>
         </div>
       </div>
     );
@@ -205,14 +205,14 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#f5f5f5]">Analytics</h1>
-          <p className="text-[#888] text-sm mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">Analytics</h1>
+          <p className="text-[#9F9A8C] text-sm mt-1">
             Live data · Updated {lastRefresh.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
         <button
           onClick={fetchData}
-          className="p-2 rounded-lg bg-[#141414] border border-[#2a2a2a] text-[#888] hover:text-[#8baf48] hover:border-[#6b8c3a]/40 transition-colors"
+          className="p-2 rounded-lg bg-[#1A1A1A] border border-[#2D2D2A] text-[#9F9A8C] hover:text-[#8baf48] hover:border-[#6b8c3a]/40 transition-colors"
           title="Refresh data"
         >
           <RefreshCw size={16} />
@@ -227,12 +227,12 @@ export default function AnalyticsPage() {
           { label: "Best Streak", value: bestStreak, icon: Flame, suffix: " days" },
           { label: "Avg/Day", value: avgCompletionsPerDay, icon: Calendar, suffix: "" },
         ].map(({ label, value, icon: Icon, suffix }) => (
-          <div key={label} className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-3 sm:p-4">
+          <div key={label} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
               <Icon size={14} className="text-[#6b8c3a] flex-shrink-0" />
-              <p className="text-[10px] sm:text-xs text-[#888] truncate">{label}</p>
+              <p className="text-[10px] sm:text-xs text-[#9F9A8C] truncate">{label}</p>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-[#f5f5f5]">
+            <p className="text-lg sm:text-xl font-bold text-[#FAF6F0]">
               {value}{suffix}
             </p>
           </div>
@@ -240,10 +240,10 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Activity Heatmap — Green / Black only */}
-      <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+      <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-[#f5f5f5] text-sm">Activity in the past year</h3>
-          <span className="text-[10px] text-[#555]">
+          <h3 className="font-semibold text-[#FAF6F0] text-sm">Activity in the past year</h3>
+          <span className="text-[10px] text-[#6B665A]">
             {heatmapData.filter((d) => d.active).length} active days
           </span>
         </div>
@@ -273,7 +273,7 @@ export default function AnalyticsPage() {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#555]">
+        <div className="flex items-center gap-2 mt-3 text-xs text-[#6B665A]">
           <span>No activity</span>
           <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#1a1a1a" }} />
           <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#6b8c3a" }} />
@@ -284,21 +284,21 @@ export default function AnalyticsPage() {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
         {/* 30-day trend */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#f5f5f5] mb-1 text-sm">30-Day Completion Trend</h3>
-          <p className="text-[10px] text-[#555] mb-4">Habits completed per day</p>
+        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">30-Day Completion Trend</h3>
+          <p className="text-[10px] text-[#6B665A] mb-4">Habits completed per day</p>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={last30}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
               <XAxis
                 dataKey="date"
-                tick={{ fill: "#555", fontSize: 10 }}
+                tick={{ fill: "#6B665A", fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 interval={6}
               />
               <YAxis
-                tick={{ fill: "#555", fontSize: 11 }}
+                tick={{ fill: "#6B665A", fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
@@ -321,19 +321,19 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Weekly rate */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#f5f5f5] mb-1 text-sm">12-Week Success Rate</h3>
-          <p className="text-[10px] text-[#555] mb-4">Percentage of habits completed each week</p>
+        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">12-Week Success Rate</h3>
+          <p className="text-[10px] text-[#6B665A] mb-4">Percentage of habits completed each week</p>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={last12Weeks} barCategoryGap="25%">
               <XAxis
                 dataKey="week"
-                tick={{ fill: "#555", fontSize: 10 }}
+                tick={{ fill: "#6B665A", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
-                tick={{ fill: "#555", fontSize: 11 }}
+                tick={{ fill: "#6B665A", fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
                 unit="%"
@@ -358,14 +358,14 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Streaks */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#f5f5f5] mb-1 text-sm">Current Streaks</h3>
-          <p className="text-[10px] text-[#555] mb-4">Consecutive days completed</p>
+        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">Current Streaks</h3>
+          <p className="text-[10px] text-[#6B665A] mb-4">Consecutive days completed</p>
           {streakData.length === 0 || streakData.every((s) => s.streak === 0) ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Flame size={24} className="text-[#333] mb-2" />
-              <p className="text-[#888] text-sm">No active streaks</p>
-              <p className="text-[#555] text-xs mt-1">Complete habits daily to build streaks!</p>
+              <Flame size={24} className="text-[#3D3D3A] mb-2" />
+              <p className="text-[#9F9A8C] text-sm">No active streaks</p>
+              <p className="text-[#6B665A] text-xs mt-1">Complete habits daily to build streaks!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -376,7 +376,7 @@ export default function AnalyticsPage() {
                   const width = Math.max(8, (entry.streak / maxStreak) * 100);
                   return (
                     <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs text-[#888] w-20 truncate flex-shrink-0">{entry.name}</span>
+                      <span className="text-xs text-[#9F9A8C] w-20 truncate flex-shrink-0">{entry.name}</span>
                       <div className="flex-1 h-6 bg-[#1a1a1a] rounded-md overflow-hidden relative">
                         <div
                           className="h-full rounded-md flex items-center justify-end pr-2 transition-all duration-500"
@@ -393,13 +393,13 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Category breakdown */}
-        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#f5f5f5] mb-1 text-sm">Habits by Category</h3>
-          <p className="text-[10px] text-[#555] mb-4">Distribution of your habits</p>
+        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">Habits by Category</h3>
+          <p className="text-[10px] text-[#6B665A] mb-4">Distribution of your habits</p>
           {pieData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Target size={24} className="text-[#333] mb-2" />
-              <p className="text-[#888] text-sm">No habits to analyze</p>
+              <Target size={24} className="text-[#3D3D3A] mb-2" />
+              <p className="text-[#9F9A8C] text-sm">No habits to analyze</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
@@ -426,7 +426,7 @@ export default function AnalyticsPage() {
                 />
                 <Legend
                   formatter={(value) => (
-                    <span style={{ color: "#888", fontSize: "12px" }}>{value}</span>
+                    <span style={{ color: "#9F9A8C", fontSize: "12px" }}>{value}</span>
                   )}
                 />
               </PieChart>
