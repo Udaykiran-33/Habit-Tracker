@@ -8,7 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, HABIT_THEMES } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 
@@ -17,7 +17,7 @@ interface Habit {
   name: string;
   category: string;
   frequency: string;
-  color: string;
+  color: string; // theme key like "olive", "cream", "midnight"
   completions: { date: string }[];
   streak: number;
 }
@@ -40,6 +40,9 @@ export default function HabitCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Resolve theme — fallback to olive for old hex-color values
+  const theme = HABIT_THEMES[habit.color] ?? HABIT_THEMES.olive;
+
   const handleToggle = async () => {
     setLoading(true);
     try {
@@ -52,26 +55,28 @@ export default function HabitCard({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all",
-        completedToday
-          ? "bg-[#1C2412] border-[#6b8c3a]/50"
-          : "bg-[#1A1A1A] border-[#2D2D2A] hover:border-[#3D3D3A]"
+        "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all"
       )}
+      style={{
+        backgroundColor: completedToday ? theme.bgDone : theme.bg,
+        borderColor: completedToday ? `${theme.borderDone}80` : theme.border,
+      }}
     >
-      {/* Color dot */}
+      {/* Theme stripe */}
       <div
         className="w-1 h-8 sm:h-10 rounded-full flex-shrink-0"
-        style={{ backgroundColor: habit.color }}
+        style={{ backgroundColor: theme.stripe }}
       />
 
       {/* Toggle */}
       <button
         onClick={handleToggle}
         disabled={loading}
-        className="flex-shrink-0 text-[#9F9A8C] hover:text-[#8baf48] transition-colors disabled:opacity-50"
+        className="flex-shrink-0 transition-colors disabled:opacity-50"
+        style={{ color: completedToday ? theme.accent : "#9F9A8C" }}
       >
         {completedToday ? (
-          <CheckCircle2 size={20} className="text-[#6b8c3a] sm:w-[22px] sm:h-[22px]" />
+          <CheckCircle2 size={20} className="sm:w-[22px] sm:h-[22px]" />
         ) : (
           <Circle size={20} className="sm:w-[22px] sm:h-[22px]" />
         )}
@@ -81,9 +86,9 @@ export default function HabitCard({
       <div className="flex-1 min-w-0">
         <p
           className={cn(
-            "font-medium text-[13px] sm:text-sm truncate",
-            completedToday ? "text-[#8baf48]" : "text-[#FAF6F0]"
+            "font-medium text-[13px] sm:text-sm truncate"
           )}
+          style={{ color: completedToday ? theme.textDone : theme.text }}
         >
           {habit.name}
         </p>

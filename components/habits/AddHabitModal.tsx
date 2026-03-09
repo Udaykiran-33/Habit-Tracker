@@ -3,14 +3,14 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { HABIT_CATEGORIES, OLIVE_COLORS } from "@/lib/utils";
+import { HABIT_CATEGORIES, HABIT_THEMES, DEFAULT_THEME } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface HabitFormData {
   name: string;
   category: string;
   frequency: string;
-  color: string;
+  color: string; // stores theme key like "olive", "cream", "midnight"
 }
 
 interface Habit extends HabitFormData {
@@ -36,7 +36,7 @@ export default function AddHabitModal({
     name: "",
     category: "General",
     frequency: "Daily",
-    color: "#6b8c3a",
+    color: DEFAULT_THEME,
   });
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +49,7 @@ export default function AddHabitModal({
         color: editHabit.color,
       });
     } else {
-      setForm({ name: "", category: "General", frequency: "Daily", color: "#6b8c3a" });
+      setForm({ name: "", category: "General", frequency: "Daily", color: DEFAULT_THEME });
     }
   }, [editHabit, isOpen]);
 
@@ -122,20 +122,42 @@ export default function AddHabitModal({
           </div>
         </div>
 
-        {/* Color */}
+        {/* Theme */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#FAF6F0]">Color</label>
-          <div className="flex gap-2">
-            {OLIVE_COLORS.map((c) => (
+          <label className="text-sm font-medium text-[#FAF6F0]">Theme</label>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(HABIT_THEMES).map(([key, theme]) => (
               <button
-                key={c}
+                key={key}
                 type="button"
-                onClick={() => setForm((f) => ({ ...f, color: c }))}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                  form.color === c ? "border-[#FAF6F0] scale-110" : "border-transparent"
+                onClick={() => setForm((f) => ({ ...f, color: key }))}
+                className={`relative rounded-xl border-2 p-3 transition-all ${
+                  form.color === key
+                    ? "border-[#FAF6F0] scale-[1.02]"
+                    : "border-[#2D2D2A] hover:border-[#3D3D3A]"
                 }`}
-                style={{ backgroundColor: c }}
-              />
+                style={{ backgroundColor: theme.bgDone }}
+              >
+                {/* Color swatch bar */}
+                <div className="flex gap-1 mb-2 justify-center">
+                  {theme.preview.map((c, i) => (
+                    <div
+                      key={i}
+                      className="w-4 h-4 rounded-full border border-black/20"
+                      style={{ backgroundColor: c }}
+                    />
+                  ))}
+                </div>
+                <p className="text-[10px] font-semibold text-center" style={{ color: theme.accent }}>
+                  {theme.name}
+                </p>
+                {/* Selected check */}
+                {form.color === key && (
+                  <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#FAF6F0] flex items-center justify-center">
+                    <span className="text-[8px] text-[#111]">✓</span>
+                  </div>
+                )}
+              </button>
             ))}
           </div>
         </div>
