@@ -73,7 +73,7 @@ export default function LandingClient() {
 
       /* ── Features title ── */
       gsap.from(featTitleRef.current, {
-        scrollTrigger: { trigger: featTitleRef.current, start: "top 88%" },
+        scrollTrigger: { trigger: featTitleRef.current, start: "top 88%", once: true },
         y: 35, opacity: 0, duration: 0.7, ease: "power3.out",
       });
 
@@ -81,7 +81,7 @@ export default function LandingClient() {
       const cards = featuresRef.current?.querySelectorAll(".fc");
       if (cards) {
         gsap.from(cards, {
-          scrollTrigger: { trigger: featuresRef.current, start: "top 82%" },
+          scrollTrigger: { trigger: featuresRef.current, start: "top 82%", once: true },
           y: 55, opacity: 0, duration: 0.7, stagger: 0.1, ease: "power3.out",
         });
       }
@@ -98,13 +98,13 @@ export default function LandingClient() {
 
       /* ── CTA ── */
       gsap.from(ctaSectionRef.current, {
-        scrollTrigger: { trigger: ctaSectionRef.current, start: "top 88%" },
+        scrollTrigger: { trigger: ctaSectionRef.current, start: "top 88%", once: true },
         y: 40, opacity: 0, duration: 0.8, ease: "power3.out",
       });
 
       /* ── Footer ── */
       gsap.from(footerRef.current, {
-        scrollTrigger: { trigger: footerRef.current, start: "top 96%" },
+        scrollTrigger: { trigger: footerRef.current, start: "top 96%", once: true },
         y: 20, opacity: 0, duration: 0.5, ease: "power2.out",
       });
     });
@@ -244,7 +244,7 @@ export default function LandingClient() {
 
         {/* ── NAV ── */}
         <nav ref={navRef} className="n">
-          <span className="n-logo">🔥 UrHabit</span>
+          <span className="n-logo"><img src="/logo.png" alt="UrHabit" style={{ width: 32, height: 32, borderRadius: 8, display: "inline-block", verticalAlign: "middle", marginRight: 8 }} />UrHabit</span>
           <div className="n-links">
             <Link href="/login" className="n-si">Sign In</Link>
             <Link href="/register" className="n-cta">Get Started</Link>
@@ -349,7 +349,7 @@ export default function LandingClient() {
 
         {/* ── FOOTER ── */}
         <footer ref={footerRef} className="ft">
-          <span className="ft-logo">🔥 UrHabit</span>
+          <span className="ft-logo"><img src="/logo.png" alt="UrHabit" style={{ width: 24, height: 24, borderRadius: 6, display: "inline-block", verticalAlign: "middle", marginRight: 6 }} />UrHabit</span>
           <span className="ft-copy">© 2026 UrHabit. All rights reserved.</span>
         </footer>
       </div>

@@ -54,57 +54,7 @@ export default function CalendarPage() {
     year: "numeric",
   });
 
-  // Build heatmap — binary: completed (green) / not (black)
-  const heatmapData: { date: string; active: boolean }[] = [];
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    const active =
-      selectedHabit === "all"
-        ? habits.some((h) => h.completions.some((c) => c.date === dateStr))
-        : habits
-            .find((h) => h.id === selectedHabit)
-            ?.completions.some((c) => c.date === dateStr) ?? false;
-    heatmapData.push({ date: dateStr, active });
-  }
-
-  // Group into weeks
-  const weeks: typeof heatmapData[] = [];
-  let week: typeof heatmapData = [];
-  const firstHeatDate = new Date(heatmapData[0]?.date ?? today);
-  const startDay = firstHeatDate.getDay();
-  for (let i = 0; i < startDay; i++) {
-    week.push({ date: "", active: false });
-  }
-  for (const entry of heatmapData) {
-    week.push(entry);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
-    }
-  }
-  if (week.length > 0) {
-    while (week.length < 7) week.push({ date: "", active: false });
-    weeks.push(week);
-  }
-
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-  // Month labels for the heatmap
-  const monthPositions: { label: string; col: number }[] = [];
-  let lastMonth = -1;
-  weeks.forEach((wk, wi) => {
-    const validDay = wk.find((d) => d.date);
-    if (validDay) {
-      const m = new Date(validDay.date).getMonth();
-      if (m !== lastMonth) {
-        monthPositions.push({ label: monthLabels[m], col: wi });
-        lastMonth = m;
-      }
-    }
-  });
 
   if (loading) {
     return (
@@ -155,69 +105,6 @@ export default function CalendarPage() {
         ))}
       </div>
 
-      {/* Activity Heatmap — Binary green/black */}
-      <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[#FAF6F0]">Activity in the past year</h3>
-          <span className="text-[10px] text-[#6B665A]">
-            {heatmapData.filter((d) => d.active).length} active days
-          </span>
-        </div>
-
-        {/* Month labels */}
-        <div className="overflow-x-auto pb-2">
-          <div className="min-w-max">
-            <div className="flex gap-[3px] mb-1 pl-0">
-              {monthPositions.map(({ label, col }, i) => {
-                const nextCol = monthPositions[i + 1]?.col ?? weeks.length;
-                const span = nextCol - col;
-                return (
-                  <span
-                    key={`${label}-${col}`}
-                    className="text-[10px] text-[#6B665A] inline-block"
-                    style={{ width: `${span * 14}px` }}
-                  >
-                    {label}
-                  </span>
-                );
-              })}
-            </div>
-            <div className="flex gap-[3px]">
-              {weeks.map((wk, wi) => (
-                <div key={wi} className="flex flex-col gap-[3px]">
-                  {wk.map((day, di) => (
-                    <div
-                      key={di}
-                      className="w-[11px] h-[11px] rounded-[2px]"
-                      style={{
-                        backgroundColor: !day.date
-                          ? "transparent"
-                          : day.active
-                          ? "#6b8c3a"
-                          : "#1a1a1a",
-                      }}
-                      title={
-                        day.date
-                          ? `${day.date}: ${day.active ? "Completed" : "No activity"}`
-                          : ""
-                      }
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Legend — Binary */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#6B665A]">
-          <span>No activity</span>
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#1a1a1a" }} />
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#6b8c3a" }} />
-          <span>Completed</span>
-        </div>
-      </div>
-
       {/* Monthly Calendar */}
       <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
         {/* Navigation */}
@@ -247,7 +134,7 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        {/* Calendar cells — fixed height, no aspect-square */}
+        {/* Calendar cells */}
         <div className="grid grid-cols-7 gap-1">
           {/* Empty padding cells */}
           {Array.from({ length: firstDay }).map((_, i) => (

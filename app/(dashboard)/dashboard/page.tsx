@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -23,6 +23,7 @@ import {
   Cell,
 } from "recharts";
 import Button from "@/components/ui/Button";
+import LevelUpPopup from "@/components/ui/LevelUpPopup";
 import toast from "react-hot-toast";
 
 interface Habit {
@@ -51,9 +52,12 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashStats | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
+  const [levelUpInfo, setLevelUpInfo] = useState({ level: 0, title: "" });
+  const prevLevelRef = useRef<number | null>(null);
   const today = getTodayString();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [hRes, sRes] = await Promise.all([
       fetch("/api/habits"),
       fetch("/api/stats"),
@@ -68,9 +72,18 @@ export default function DashboardPage() {
 
     setHabits(enriched);
     setStats(statsData);
-  };
 
-  useEffect(() => { fetchData(); }, []);
+    // Check for level-up
+    const newXp = statsData.xp ?? 0;
+    const newLevel = getLevel(newXp);
+    if (prevLevelRef.current !== null && newLevel > prevLevelRef.current) {
+      setLevelUpInfo({ level: newLevel, title: getLevelTitle(newLevel) });
+      setShowLevelUp(true);
+    }
+    prevLevelRef.current = newLevel;
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleToggle = async (habitId: string) => {
     const res = await fetch("/api/completions", {
@@ -296,6 +309,13 @@ export default function DashboardPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
+      />
+
+      <LevelUpPopup
+        level={levelUpInfo.level}
+        title={levelUpInfo.title}
+        show={showLevelUp}
+        onClose={() => setShowLevelUp(false)}
       />
     </div>
   );

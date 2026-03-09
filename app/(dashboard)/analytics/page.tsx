@@ -33,6 +33,7 @@ interface Stats {
   successRate: number;
   xp: number;
   level: number;
+  joinedAt?: string;
 }
 
 export default function AnalyticsPage() {
@@ -150,35 +151,7 @@ export default function AnalyticsPage() {
     ? (totalCompletions / allCompletionDates.size).toFixed(1)
     : "0";
 
-  // Activity heatmap — binary green/black
-  const heatmapData: { date: string; active: boolean }[] = [];
-  for (let i = 364; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
-    const active = habits.some((h) => h.completions.some((c) => c.date === dateStr));
-    heatmapData.push({ date: dateStr, active });
-  }
 
-  // Group into weeks
-  const weeks: typeof heatmapData[] = [];
-  let week: typeof heatmapData = [];
-  const firstHeatDate = new Date(heatmapData[0]?.date ?? today);
-  const startDay = firstHeatDate.getDay();
-  for (let i = 0; i < startDay; i++) {
-    week.push({ date: "", active: false });
-  }
-  for (const entry of heatmapData) {
-    week.push(entry);
-    if (week.length === 7) {
-      weeks.push(week);
-      week = [];
-    }
-  }
-  if (week.length > 0) {
-    while (week.length < 7) week.push({ date: "", active: false });
-    weeks.push(week);
-  }
 
   const tooltipStyle = {
     background: "#222222",
@@ -239,47 +212,112 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Activity Heatmap — Green / Black only */}
-      <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-[#FAF6F0] text-sm">Activity in the past year</h3>
-          <span className="text-[10px] text-[#6B665A]">
-            {heatmapData.filter((d) => d.active).length} active days
-          </span>
-        </div>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-[3px] min-w-max">
-            {weeks.map((wk, wi) => (
-              <div key={wi} className="flex flex-col gap-[3px]">
-                {wk.map((day, di) => (
+      {/* Daily Activity — Current Month */}
+      {(() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDayOfWeek = new Date(year, month, 1).getDay();
+        const monthName = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+        // Build all days of the month
+        const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
+          const dayNum = i + 1;
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+          const completed = habits.filter((h) =>
+            h.completions.some((c) => c.date === dateStr)
+          ).length;
+          const total = habits.length;
+          const ratio = total > 0 ? completed / total : 0;
+          const allDone = total > 0 && completed === total;
+          const isFuture = dateStr > today;
+          return { dayNum, dateStr, completed, total, ratio, allDone, isFuture };
+        });
+
+        const perfectDays = monthDays.filter((d) => d.allDone).length;
+        const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        // Color function: none=dark, partial=faded green, all=solid green
+        const getColor = (d: typeof monthDays[0]) => {
+          if (d.isFuture) return "#111111";
+          if (d.allDone) return "#6b8c3a";
+          if (d.ratio > 0) return `rgba(107,140,58,${0.15 + d.ratio * 0.45})`;
+          return "#161B22";
+        };
+
+        return (
+          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-[#FAF6F0] text-sm">{monthName}</h3>
+              <span className="text-[10px] text-[#6B665A]">
+                {perfectDays} perfect day{perfectDays !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1.5 mb-1">
+              {weekdays.map((d) => (
+                <div key={d} className="text-center text-[9px] sm:text-[10px] text-[#6B665A] font-semibold py-0.5">
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7 gap-1.5">
+              {/* Empty cells for padding */}
+              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
+                <div key={`pad-${i}`} className="h-9 sm:h-10" />
+              ))}
+
+              {monthDays.map((day) => {
+                const isToday = day.dateStr === today;
+
+                return (
                   <div
-                    key={di}
-                    className="w-[11px] h-[11px] rounded-[2px]"
-                    style={{
-                      backgroundColor: !day.date
-                        ? "transparent"
-                        : day.active
-                        ? "#6b8c3a"
-                        : "#1a1a1a",
-                    }}
+                    key={day.dateStr}
+                    className={`h-9 sm:h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
+                      isToday ? "ring-1.5 ring-[#8baf48] ring-offset-1 ring-offset-[#1A1A1A]" : ""
+                    } ${day.isFuture ? "opacity-20" : ""}`}
+                    style={{ backgroundColor: getColor(day) }}
                     title={
-                      day.date
-                        ? `${day.date}: ${day.active ? "Completed" : "No activity"}`
-                        : ""
+                      day.isFuture
+                        ? day.dateStr
+                        : `${day.dateStr}: ${day.completed}/${day.total} habits${day.allDone ? " ✓ All done!" : ""}`
                     }
-                  />
-                ))}
+                  >
+                    <span className={
+                      day.isFuture
+                        ? "text-[#3A3A3A]"
+                        : day.allDone
+                        ? "text-white"
+                        : day.ratio > 0
+                        ? "text-[#c8e6a0]"
+                        : "text-[#4A4A4A]"
+                    }>
+                      {day.dayNum}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center justify-between mt-3">
+              <span className="text-[10px] text-[#6B665A]">All habits done = solid green</span>
+              <div className="flex items-center gap-1 text-[10px] text-[#6B665A]">
+                <div className="w-[10px] h-[10px] rounded-sm" style={{ backgroundColor: "#161B22" }} />
+                <span>None</span>
+                <div className="w-[10px] h-[10px] rounded-sm ml-1" style={{ backgroundColor: "rgba(107,140,58,0.35)" }} />
+                <span>Partial</span>
+                <div className="w-[10px] h-[10px] rounded-sm ml-1" style={{ backgroundColor: "#6b8c3a" }} />
+                <span>All</span>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 mt-3 text-xs text-[#6B665A]">
-          <span>No activity</span>
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#1a1a1a" }} />
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: "#6b8c3a" }} />
-          <span>Completed</span>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
