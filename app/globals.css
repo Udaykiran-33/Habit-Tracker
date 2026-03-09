@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0D0D0D;
+  --surface: #161616;
+  --surface-2: #1C1C1C;
+  --border: #2A2A2A;
+  --foreground: #FAF6F0;
+  --muted: #85806F;
+  --olive: #556B2F;
+  --olive-dark: #3E4F20;
+  --olive-light: #8BAF48;
+  --olive-mid: #6B8C3A;
+  --olive-bg: #1A2010;
+  --olive-pale: #DCE9C0;
+  --cream: #FAF6F0;
+  --cream-mid: #F0EAE0;
+  --cream-dark: #E5DDD0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-olive: var(--olive);
+  --color-olive-dark: var(--olive-dark);
+  --color-olive-light: var(--olive-light);
+  --color-olive-bg: var(--olive-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--olive-dark);
+}
+
+/* Smooth transitions for interactive elements */
+a, button, input, select, textarea {
+  transition-property: color, background-color, border-color, opacity, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 150ms;
+}
+
+/* Fix sidebar slide animation */
+aside {
+  transition: transform 300ms ease !important;
+}
+
+/* Remove transition from layout elements */
+.no-transition {
+  transition: none !important;
 }
