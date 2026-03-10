@@ -9,6 +9,7 @@ import {
   BarChart2,
   Calendar,
   Trophy,
+  MessageSquarePlus,
   LogOut,
   Flame,
   Menu,
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
   { href: "/analytics", label: "Analytics", icon: BarChart2 },
   { href: "/calendar", label: "Calendar", icon: Calendar },
   { href: "/achievements", label: "Achievements", icon: Trophy },
+  { href: "/feedback", label: "Feedback", icon: MessageSquarePlus },
 ];
 
 export default function Sidebar() {

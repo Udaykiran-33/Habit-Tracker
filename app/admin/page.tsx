@@ -1,0 +1,540 @@
+"use client";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Flame,
+  Lock,
+  Eye,
+  EyeOff,
+  MessageSquare,
+  Lightbulb,
+  Wrench,
+  Bug,
+  HelpCircle,
+  Search,
+  Filter,
+  CalendarDays,
+  Users,
+  TrendingUp,
+  LogOut,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
+
+/* ─── Types ─── */
+interface FeedbackItem {
+  _id: string;
+  userName: string;
+  userEmail: string;
+  message: string;
+  category: string;
+  createdAt: string;
+}
+
+const CATEGORY_META: Record<
+  string,
+  { label: string; icon: typeof Lightbulb; color: string; bg: string }
+> = {
+  feature_request: {
+    label: "Feature Request",
+    icon: Lightbulb,
+    color: "#8baf48",
+    bg: "rgba(139,175,72,.12)",
+  },
+  improvement: {
+    label: "Improvement",
+    icon: Wrench,
+    color: "#e2a63d",
+    bg: "rgba(226,166,61,.12)",
+  },
+  bug: {
+    label: "Bug Report",
+    icon: Bug,
+    color: "#e25c5c",
+    bg: "rgba(226,92,92,.12)",
+  },
+  other: {
+    label: "Other",
+    icon: HelpCircle,
+    color: "#7c8a9e",
+    bg: "rgba(124,138,158,.12)",
+  },
+};
+
+/* ─── Admin Page Component ─── */
+export default function AdminPage() {
+  const [authed, setAuthed] = useState(false);
+  const [password, setPassword] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginError, setLoginError] = useState("");
+
+  const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  /* ─── Auth ─── */
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return setLoginError("Password is required");
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      const res = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (res.ok) {
+        setAuthed(true);
+      } else {
+        setLoginError("Invalid password");
+      }
+    } catch {
+      setLoginError("Something went wrong");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  /* ─── Fetch feedback ─── */
+  useEffect(() => {
+    if (!authed) return;
+    (async () => {
+      try {
+        const res = await fetch("/api/feedback");
+        const data = await res.json();
+        setFeedbacks(data.feedbacks || []);
+      } catch {
+        /* ignore */
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [authed]);
+
+  /* ─── Derived data ─── */
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  const stats = useMemo(() => {
+    const todayCount = feedbacks.filter(
+      (f) => f.createdAt.slice(0, 10) === todayStr
+    ).length;
+    const featureCount = feedbacks.filter(
+      (f) => f.category === "feature_request"
+    ).length;
+    const bugCount = feedbacks.filter((f) => f.category === "bug").length;
+    const uniqueUsers = new Set(feedbacks.map((f) => f.userEmail)).size;
+    return {
+      total: feedbacks.length,
+      today: todayCount,
+      features: featureCount,
+      bugs: bugCount,
+      users: uniqueUsers,
+    };
+  }, [feedbacks, todayStr]);
+
+  const filtered = useMemo(() => {
+    let list = [...feedbacks];
+    if (catFilter !== "all") list = list.filter((f) => f.category === catFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (f) =>
+          f.userName.toLowerCase().includes(q) ||
+          f.userEmail.toLowerCase().includes(q) ||
+          f.message.toLowerCase().includes(q)
+      );
+    }
+    list.sort((a, b) =>
+      sortOrder === "newest"
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+    return list;
+  }, [feedbacks, catFilter, search, sortOrder]);
+
+  /* ────────── LOGIN SCREEN ────────── */
+  if (!authed) {
+    return (
+      <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4">
+        {/* Background accents */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-[#6b8c3a]/5 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-[#F5F0E8]/3 rounded-full blur-[120px]" />
+        </div>
+
+        <div className="relative w-full max-w-sm">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-11 h-11 bg-[#6b8c3a] rounded-xl flex items-center justify-center shadow-lg shadow-[#6b8c3a]/20">
+              <Flame size={22} className="text-[#FAF6F0]" />
+            </div>
+            <span className="text-[#FAF6F0] font-bold text-2xl tracking-tight">
+              Ur<span className="text-[#8baf48]">Habit</span>
+            </span>
+          </div>
+
+          {/* Login Card */}
+          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-2xl p-6 sm:p-8 shadow-2xl">
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 bg-[#6b8c3a]/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Lock size={20} className="text-[#8baf48]" />
+              </div>
+              <h1 className="text-xl font-bold text-[#FAF6F0]">Admin Portal</h1>
+              <p className="text-[#9F9A8C] text-sm mt-1">
+                Enter the admin password to continue
+              </p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-[#FAF6F0] mb-1.5 block">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9F9A8C]">
+                    <Lock size={16} />
+                  </div>
+                  <input
+                    type={showPw ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setLoginError("");
+                    }}
+                    placeholder="Enter admin password"
+                    className="w-full bg-[#151515] border border-[#2D2D2A] rounded-xl pl-10 pr-10 py-3 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a] transition-colors"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((v) => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B665A] hover:text-[#9F9A8C] transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                {loginError && (
+                  <p className="text-xs text-red-400 mt-1.5">{loginError}</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full bg-[#6b8c3a] hover:bg-[#7a9e43] text-[#FAF6F0] font-medium py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {loginLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                    Verifying…
+                  </>
+                ) : (
+                  "Access Admin Panel"
+                )}
+              </button>
+            </form>
+          </div>
+
+          <p className="text-center text-[10px] text-[#6B665A] mt-6">
+            UrHabit Admin • Restricted Access
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ────────── ADMIN DASHBOARD ────────── */
+  return (
+    <div className="min-h-screen bg-[#111111]">
+      {/* Top bar */}
+      <header className="sticky top-0 z-30 bg-[#151515]/90 backdrop-blur-lg border-b border-[#2D2D2A]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
+              <Flame size={16} className="text-[#FAF6F0]" />
+            </div>
+            <span className="text-[#FAF6F0] font-bold text-lg tracking-tight">
+              Ur<span className="text-[#8baf48]">Habit</span>
+            </span>
+            <span className="text-[#6B665A] text-xs font-medium ml-1 hidden sm:inline">
+              / Admin
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              setAuthed(false);
+              setPassword("");
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#9F9A8C] hover:text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut size={15} />
+            <span className="hidden sm:inline">Sign Out</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Page Title */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">
+            Feedback Dashboard
+          </h1>
+          <p className="text-[#9F9A8C] text-sm mt-1">
+            Manage and review user feedback
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          {[
+            {
+              label: "Total Feedback",
+              value: stats.total,
+              icon: MessageSquare,
+              color: "#8baf48",
+            },
+            {
+              label: "Today",
+              value: stats.today,
+              icon: CalendarDays,
+              color: "#e2a63d",
+            },
+            {
+              label: "Feature Requests",
+              value: stats.features,
+              icon: Lightbulb,
+              color: "#6b8c3a",
+            },
+            {
+              label: "Bug Reports",
+              value: stats.bugs,
+              icon: Bug,
+              color: "#e25c5c",
+            },
+            {
+              label: "Unique Users",
+              value: stats.users,
+              icon: Users,
+              color: "#7c8a9e",
+            },
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <div
+                key={s.label}
+                className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4 hover:border-[#3D3D3A] transition-all group"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                    style={{ backgroundColor: `${s.color}15` }}
+                  >
+                    <Icon size={15} style={{ color: s.color }} />
+                  </div>
+                  <TrendingUp size={12} className="text-[#3D3D3A]" />
+                </div>
+                <p className="text-lg sm:text-2xl font-bold text-[#FAF6F0]">
+                  {s.value}
+                </p>
+                <p className="text-[10px] sm:text-xs text-[#6B665A] mt-0.5">
+                  {s.label}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Filters Row */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B665A]"
+            />
+            <input
+              type="text"
+              placeholder="Search by name, email, or message…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a] transition-colors"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center gap-2">
+            <Filter size={15} className="text-[#6B665A] flex-shrink-0" />
+            <select
+              value={catFilter}
+              onChange={(e) => setCatFilter(e.target.value)}
+              className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl px-3 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a] cursor-pointer"
+            >
+              <option value="all">All Categories</option>
+              <option value="feature_request">Feature Requests</option>
+              <option value="improvement">Improvements</option>
+              <option value="bug">Bug Reports</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <button
+            onClick={() =>
+              setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
+            }
+            className="flex items-center gap-1.5 px-3 py-2.5 bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl text-sm text-[#9F9A8C] hover:border-[#3D3D3A] transition-all flex-shrink-0"
+          >
+            {sortOrder === "newest" ? (
+              <ChevronDown size={14} />
+            ) : (
+              <ChevronUp size={14} />
+            )}
+            {sortOrder === "newest" ? "Newest" : "Oldest"}
+          </button>
+        </div>
+
+        {/* Results count */}
+        <p className="text-xs text-[#6B665A] mb-4">
+          Showing {filtered.length} of {feedbacks.length} feedback entries
+        </p>
+
+        {/* Feedback Cards */}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-5 animate-pulse"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-9 h-9 bg-[#2D2D2A] rounded-full" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 bg-[#2D2D2A] rounded w-1/4" />
+                    <div className="h-2 bg-[#2D2D2A] rounded w-1/6" />
+                  </div>
+                  <div className="h-5 bg-[#2D2D2A] rounded-full w-20" />
+                </div>
+                <div className="h-2 bg-[#2D2D2A] rounded w-3/4 mb-2" />
+                <div className="h-2 bg-[#2D2D2A] rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-12 text-center">
+            <MessageSquare
+              size={32}
+              className="text-[#3D3D3A] mx-auto mb-3"
+            />
+            <p className="text-[#9F9A8C] text-sm">
+              {feedbacks.length === 0
+                ? "No feedback received yet"
+                : "No feedback matches your filters"}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filtered.map((fb) => {
+              const cat = CATEGORY_META[fb.category] || CATEGORY_META.other;
+              const CatIcon = cat.icon;
+              const isExpanded = expandedId === fb._id;
+              const isLong = fb.message.length > 200;
+              const initials = fb.userName
+                .split(" ")
+                .map((w) => w[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
+
+              return (
+                <div
+                  key={fb._id}
+                  className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 hover:border-[#3D3D3A] transition-all"
+                >
+                  {/* Header row */}
+                  <div className="flex items-start gap-3 mb-3">
+                    {/* Avatar */}
+                    <div className="w-9 h-9 rounded-full bg-[#6b8c3a]/15 flex items-center justify-center text-[#8baf48] text-xs font-bold flex-shrink-0">
+                      {initials}
+                    </div>
+
+                    {/* Name + email + date */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#FAF6F0] truncate">
+                        {fb.userName}
+                      </p>
+                      <p className="text-[10px] text-[#6B665A] truncate">
+                        {fb.userEmail}
+                      </p>
+                    </div>
+
+                    {/* Category badge */}
+                    <div
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium flex-shrink-0"
+                      style={{ color: cat.color, backgroundColor: cat.bg }}
+                    >
+                      <CatIcon size={11} />
+                      <span className="hidden sm:inline">{cat.label}</span>
+                    </div>
+                  </div>
+
+                  {/* Message body */}
+                  <p className="text-sm text-[#C8C3B8] leading-relaxed whitespace-pre-wrap">
+                    {isLong && !isExpanded
+                      ? fb.message.slice(0, 200) + "…"
+                      : fb.message}
+                  </p>
+                  {isLong && (
+                    <button
+                      onClick={() =>
+                        setExpandedId(isExpanded ? null : fb._id)
+                      }
+                      className="text-xs text-[#8baf48] hover:underline mt-1"
+                    >
+                      {isExpanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center gap-1.5 mt-3 text-[10px] text-[#6B665A]">
+                    <CalendarDays size={10} />
+                    {new Date(fb.createdAt).toLocaleDateString("en-US", {
+                      weekday: "short",
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
