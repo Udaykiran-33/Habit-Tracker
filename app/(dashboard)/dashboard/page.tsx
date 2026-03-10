@@ -50,6 +50,7 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [stats, setStats] = useState<DashStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -72,6 +73,7 @@ export default function DashboardPage() {
 
     setHabits(enriched);
     setStats(statsData);
+    setLoading(false);
 
     // Check for level-up
     const newXp = statsData.xp ?? 0;
@@ -209,7 +211,22 @@ export default function DashboardPage() {
               {completedHabits.length}/{habits.length} done
             </span>
           </div>
-          {habits.length === 0 ? (
+          {loading ? (
+            <div className="space-y-2 sm:space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 animate-pulse">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#2D2D2A] rounded-lg flex-shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-[#2D2D2A] rounded w-1/3" />
+                      <div className="h-2 bg-[#2D2D2A] rounded w-1/5" />
+                    </div>
+                    <div className="w-8 h-8 bg-[#2D2D2A] rounded-full flex-shrink-0" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : habits.length === 0 ? (
             <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-8 sm:p-10 text-center">
               <Target size={28} className="text-[#3D3D3A] mx-auto mb-2" />
               <p className="text-[#9F9A8C] text-sm">No habits yet</p>

@@ -20,6 +20,7 @@ interface Habit {
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [filtered, setFiltered] = useState<Habit[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function HabitsPage() {
       streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
     }));
     setHabits(enriched);
+    setLoading(false);
   };
 
   useEffect(() => { fetchHabits(); }, []);
@@ -156,7 +158,22 @@ export default function HabitsPage() {
       </div>
 
       {/* Habits List */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#2D2D2A] rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-[#2D2D2A] rounded w-2/5" />
+                  <div className="h-2 bg-[#2D2D2A] rounded w-1/5" />
+                </div>
+                <div className="w-8 h-8 bg-[#2D2D2A] rounded-full flex-shrink-0" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-[#9F9A8C]">
           <p className="text-4xl mb-3">🎯</p>
           <p className="text-sm">

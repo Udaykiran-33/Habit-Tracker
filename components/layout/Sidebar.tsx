@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   LayoutDashboard,
   CheckSquare,
@@ -27,6 +27,12 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOut = useCallback(async () => {
+    setSigningOut(true);
+    await signOut({ callbackUrl: "/login", redirect: true });
+  }, []);
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -115,11 +121,12 @@ export default function Sidebar() {
         {/* Sign out */}
         <div className="px-3 py-4 border-t border-[#2D2D2A]">
           <button
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#9F9A8C] hover:text-red-400 hover:bg-red-500/10 transition-all"
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#9F9A8C] hover:text-red-400 hover:bg-red-500/10 transition-all disabled:opacity-50 disabled:cursor-wait"
           >
             <LogOut size={16} />
-            Sign Out
+            {signingOut ? "Signing out…" : "Sign Out"}
           </button>
         </div>
       </aside>
