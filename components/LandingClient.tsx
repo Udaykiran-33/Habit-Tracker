@@ -165,13 +165,13 @@ export default function LandingClient() {
         .fc-d { font-size:0.82rem; color:${C.muted}; line-height:1.65; }
         .fc-ln { position:absolute; bottom:0; left:0; width:42%; height:3px; background:linear-gradient(90deg,${C.olive},transparent); border-bottom-left-radius:20px; }
 
-        /* ═══ PROOF ═══ */
-        .p { background:${C.cream}; padding:4.5rem 6vw; text-align:center; border-top:1px solid ${C.creamDark}; }
-        .p-lbl { color:${C.mutedLight}; font-size:0.75rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin:0 0 2rem; }
-        .p-grid { display:flex; justify-content:center; gap:5rem; flex-wrap:wrap; }
-        .sp-item {}
-        .sp-n { font-size:2.6rem; font-weight:900; color:${C.olive}; letter-spacing:-0.04em; }
-        .sp-l { font-size:0.84rem; color:${C.muted}; margin-top:0.25rem; }
+        /* ═══ CREATOR ═══ */
+        .p { background:${C.cream}; padding:5.5rem 6vw; text-align:center; border-top:1px solid ${C.creamDark}; }
+        .p-lbl { color:${C.mutedLight}; font-size:0.75rem; font-weight:800; letter-spacing:0.12em; text-transform:uppercase; margin:0 0 2.5rem; }
+        .p-avatar-wrap { display:inline-flex; align-items:center; justify-content:center; position:relative; margin-bottom:1.5rem; width:220px; height:220px; border-radius:50%; border:6px solid ${C.cream}; box-shadow:0 18px 48px rgba(85,107,47,0.22), 0 0 0 3px ${C.olivePale}; overflow:hidden; }
+        .p-avatar { width:100%; height:100%; object-fit:cover; object-position:center 20%; display:block; }
+        .p-msg { max-width:580px; margin:0 auto 1.25rem; font-size:1.2rem; color:${C.black}; line-height:1.7; font-weight:500; letter-spacing:-0.01em; }
+        .p-author { font-size:0.95rem; font-weight:800; color:${C.olive}; letter-spacing:0.02em; text-transform:uppercase; }
 
         /* ═══ CTA ═══ */
         .c { background:${C.olive}; padding:5rem 6vw; text-align:center; }
@@ -222,9 +222,9 @@ export default function LandingClient() {
           .fc-i { width:40px; height:40px; font-size:1.2rem; }
           .s-title { font-size:1.5rem; }
 
-          .p { padding:3rem 5vw; }
-          .p-grid { flex-direction:column; gap:1.5rem; align-items:center; }
-          .sp-n { font-size:2.1rem; }
+          .p { padding:4rem 5vw; }
+          .p-avatar-wrap { width:200px; height:200px; }
+          .p-msg { font-size:1.05rem; }
 
           .c { padding:3rem 5vw; }
           .c-t { font-size:1.7rem; }
@@ -318,20 +318,22 @@ export default function LandingClient() {
           </div>
         </section>
 
-        {/* ── SOCIAL PROOF ── */}
+        {/* ── CREATOR ── */}
         <section ref={proofRef} className="p">
-          <p className="p-lbl">Built for the disciplined</p>
-          <div className="p-grid">
-            {[
-              { s: "10k+", l: "Habits tracked" },
-              { s: "21 days", l: "Avg. streak" },
-              { s: "87%", l: "Completion rate" },
-            ].map(x => (
-              <div key={x.l} className="sp-item">
-                <div className="sp-n">{x.s}</div>
-                <div className="sp-l">{x.l}</div>
-              </div>
-            ))}
+          <p className="p-lbl">Creator of UrHabit</p>
+          <div className="sp-item">
+            <div className="p-avatar-wrap">
+              <Image 
+                src="https://res.cloudinary.com/dmyww4jcv/image/upload/v1772437842/Gemini_Generated_Image_lzcze1lzcze1lzcz_nji7eh.jpg" 
+                alt="Uday Kiran" 
+                width={500} 
+                height={500} 
+                className="p-avatar" 
+                unoptimized
+              />
+            </div>
+            <p className="p-msg">"Enjoy adding unlimited habits and track them to stay consistent."</p>
+            <div className="p-author">— Developed by Uday Kiran</div>
           </div>
         </section>
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { cn, HABIT_CATEGORIES, OLIVE_COLORS } from "@/lib/utils";
+import { cn, HABIT_CATEGORIES } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface HabitFormData {
@@ -123,23 +123,7 @@ export default function AddHabitModal({
           </div>
         </div>
 
-        {/* Color */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground">Color</label>
-          <div className="flex gap-2">
-            {OLIVE_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setForm((f) => ({ ...f, color: c }))}
-                className={`w-7 h-7 rounded-full border-2 transition-all ${
-                  form.color === c ? "border-foreground scale-110" : "border-transparent"
-                }`}
-                style={{ backgroundColor: c }}
-              />
-            ))}
-          </div>
-        </div>
+
 
         <div className="flex gap-3 pt-2">
           <Button
