@@ -49,22 +49,32 @@ export default function LevelUpPopup({ level, title, show, onClose }: LevelUpPop
 
       {/* Card */}
       <div
-        className="relative z-10 bg-[#1A1A1A] border-2 border-[#6b8c3a] rounded-2xl p-8 sm:p-10 text-center max-w-sm w-full shadow-2xl transition-all duration-500"
+        className="relative z-10 border-2 rounded-2xl p-8 sm:p-10 text-center max-w-sm w-full shadow-2xl transition-all duration-500"
         style={{
+          backgroundColor: "var(--surface)",
+          borderColor: "var(--olive-mid)",
           opacity: animating ? 1 : 0,
           transform: animating ? "scale(1) translateY(0)" : "scale(0.8) translateY(40px)",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Glow ring */}
-        <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
-          boxShadow: "0 0 60px rgba(107,140,58,0.3), 0 0 120px rgba(107,140,58,0.1), inset 0 0 1px rgba(139,175,72,0.4)",
+        <div className="absolute inset-0 rounded-2xl pointer-events-none transition-colors" style={{
+          boxShadow: `0 0 60px color-mix(in srgb, var(--olive-mid) 30%, transparent), 
+                      0 0 120px color-mix(in srgb, var(--olive-mid) 10%, transparent), 
+                      inset 0 0 1px color-mix(in srgb, var(--olive-light) 40%, transparent)`,
         }} />
 
         {/* Badge */}
         <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-5">
-          <div className="absolute inset-0 bg-[#6b8c3a]/20 rounded-full animate-ping" />
-          <div className="relative w-full h-full bg-[#6b8c3a] rounded-full flex items-center justify-center border-4 border-[#8baf48]">
+          <div 
+            className="absolute inset-0 rounded-full animate-ping" 
+            style={{ backgroundColor: "color-mix(in srgb, var(--olive-mid) 20%, transparent)" }}
+          />
+          <div 
+            className="relative w-full h-full rounded-full flex items-center justify-center border-4"
+            style={{ backgroundColor: "var(--olive-mid)", borderColor: "var(--olive-light)" }}
+          >
             <span className="text-3xl sm:text-4xl font-black text-[#FAF6F0]">{level}</span>
           </div>
         </div>
@@ -72,13 +82,13 @@ export default function LevelUpPopup({ level, title, show, onClose }: LevelUpPop
         {/* Sparkles */}
         <div className="text-3xl mb-2">🎉</div>
 
-        <h2 className="text-xl sm:text-2xl font-black text-[#FAF6F0] mb-1">
+        <h2 className="text-xl sm:text-2xl font-black mb-1" style={{ color: "var(--foreground)" }}>
           Level Up!
         </h2>
-        <p className="text-[#8baf48] font-bold text-sm mb-3">
+        <p className="font-bold text-sm mb-3" style={{ color: "var(--olive-light)" }}>
           You reached Level {level} — {title}
         </p>
-        <p className="text-[#9F9A8C] text-xs leading-relaxed mb-6">
+        <p className="text-xs leading-relaxed mb-6" style={{ color: "var(--muted)" }}>
           Keep crushing your habits to unlock the next level and earn more badges!
         </p>
 
@@ -87,7 +97,10 @@ export default function LevelUpPopup({ level, title, show, onClose }: LevelUpPop
             setAnimating(false);
             setTimeout(() => { setVisible(false); onClose(); }, 400);
           }}
-          className="bg-[#6b8c3a] text-[#FAF6F0] font-bold text-sm px-6 py-2.5 rounded-full hover:bg-[#7a9e43] transition-colors"
+          className="font-bold text-sm px-6 py-2.5 rounded-full transition-colors"
+          style={{ backgroundColor: "var(--olive-mid)", color: "#FAF6F0" }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--olive-light)")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--olive-mid)")}
         >
           Keep Going! 🔥
         </button>

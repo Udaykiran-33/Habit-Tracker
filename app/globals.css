@@ -1,21 +1,52 @@
 @import "tailwindcss";
 
-:root {
-  --background: #0D0D0D;
-  --surface: #161616;
-  --surface-2: #1C1C1C;
-  --border: #2A2A2A;
-  --foreground: #FAF6F0;
-  --muted: #85806F;
-  --olive: #556B2F;
-  --olive-dark: #3E4F20;
-  --olive-light: #8BAF48;
-  --olive-mid: #6B8C3A;
-  --olive-bg: #1A2010;
-  --olive-pale: #DCE9C0;
-  --cream: #FAF6F0;
-  --cream-mid: #F0EAE0;
-  --cream-dark: #E5DDD0;
+/* ─── Dark theme (default) ─── */
+:root,
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --surface: #141414;
+  --surface-2: #1c1c1c;
+  --surface-3: #0d0d0d;
+  --border: #2a2a2a;
+  --border-hover: #3a3a3a;
+  --foreground: #f5f5f5;
+  --muted: #888888;
+  --dim: #555555;
+  --disabled: #333333;
+  --olive: #6b8c3a;
+  --olive-dark: #4a5c2f;
+  --olive-light: #8baf48;
+  --olive-bg: #1a2010;
+  --olive-mid: #6b8c3a;
+  --heatmap-empty: #1a1a1a;
+  --ring-offset: #0a0a0a;
+  --overlay: rgba(0,0,0,0.7);
+  --sidebar-bg: #0d0d0d;
+  --sidebar-border: #1e1e1e;
+}
+
+/* ─── Light theme ─── */
+[data-theme="light"] {
+  --background: #FAF6F0;
+  --surface: #FFFFFF;
+  --surface-2: #F0EAE0;
+  --surface-3: #F5F0E8;
+  --border: #E0D8CC;
+  --border-hover: #D0C8BC;
+  --foreground: #1a1a1a;
+  --muted: #6B6560;
+  --dim: #9A948C;
+  --disabled: #C8C2BA;
+  --olive: #5A7832;
+  --olive-dark: #4A6828;
+  --olive-light: #4A6828;
+  --olive-bg: #EFF5E4;
+  --olive-mid: #5A7832;
+  --heatmap-empty: #E8E2D8;
+  --ring-offset: #FAF6F0;
+  --overlay: rgba(0,0,0,0.4);
+  --sidebar-bg: #F5F0E8;
+  --sidebar-border: #E0D8CC;
 }
 
 @theme inline {
@@ -23,12 +54,21 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
   --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-disabled: var(--disabled);
   --color-olive: var(--olive);
   --color-olive-dark: var(--olive-dark);
   --color-olive-light: var(--olive-light);
   --color-olive-bg: var(--olive-bg);
+  --color-olive-mid: var(--olive-mid);
+  --color-heatmap-empty: var(--heatmap-empty);
+  --color-ring-offset: var(--ring-offset);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-border: var(--sidebar-border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -42,6 +82,15 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   min-height: 100vh;
+}
+
+/* Smooth theme transition for all elements */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-timing-function: ease;
+  transition-duration: 250ms;
 }
 
 /* Scrollbar */
@@ -59,16 +108,16 @@ body {
   background: var(--olive-dark);
 }
 
-/* Smooth transitions for interactive elements */
+/* Faster transitions for interactive elements */
 a, button, input, select, textarea {
-  transition-property: color, background-color, border-color, opacity, box-shadow;
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
   transition-timing-function: ease;
   transition-duration: 150ms;
 }
 
-/* Fix sidebar slide animation */
+/* Fix sidebar slide animation (exclude from color transitions) */
 aside {
-  transition: transform 300ms ease !important;
+  transition: transform 300ms ease, background-color 250ms ease, border-color 250ms ease !important;
 }
 
 /* Remove transition from layout elements */
@@ -76,14 +125,8 @@ aside {
   transition: none !important;
 }
 
-/* Modal entrance animation */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* Override recharts elements that don't respond to CSS vars */
+[data-theme="light"] .recharts-cartesian-grid-horizontal line,
+[data-theme="light"] .recharts-cartesian-grid-vertical line {
+  stroke: var(--border);
 }

@@ -15,7 +15,7 @@ export default async function DashboardLayout({
 
   return (
     <SessionWrapper>
-      <div className="flex min-h-screen bg-[#111111]">
+      <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 lg:ml-60 min-h-screen overflow-x-hidden pt-14 lg:pt-0">
           {children}

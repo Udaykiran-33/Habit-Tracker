@@ -16,7 +16,8 @@ import {
   Legend,
 } from "recharts";
 import { calculateStreak, getTodayString } from "@/lib/utils";
-import { TrendingUp, Flame, Target, Calendar, RefreshCw } from "lucide-react";
+import { TrendingUp, Flame, Target, Calendar, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface Habit {
   id: string;
@@ -33,7 +34,6 @@ interface Stats {
   successRate: number;
   xp: number;
   level: number;
-  joinedAt?: string;
 }
 
 export default function AnalyticsPage() {
@@ -41,6 +41,9 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,14 +65,11 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchData();
-    // Auto-refresh every 30 seconds for live data
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
   const today = getTodayString();
-
-  // --- Computed data from live habits ---
 
   // All unique completion dates across all habits
   const allCompletionDates = new Set(
@@ -94,28 +94,9 @@ export default function AnalyticsPage() {
     };
   });
 
-  // Last 12 weeks
-  const last12Weeks = Array.from({ length: 12 }, (_, i) => {
-    const weekEnd = new Date();
-    weekEnd.setDate(weekEnd.getDate() - (11 - i) * 7);
-    const weekDates = Array.from({ length: 7 }, (_, d) => {
-      const day = new Date(weekEnd);
-      day.setDate(weekEnd.getDate() - (6 - d));
-      return day.toISOString().split("T")[0];
-    });
-    const totalPossible = habits.length * 7;
-    const completions = habits.reduce((sum, h) => {
-      return sum + weekDates.filter((d) => h.completions.some((c) => c.date === d)).length;
-    }, 0);
-    return {
-      week: `W${i + 1}`,
-      completions,
-      possible: totalPossible,
-      rate: totalPossible > 0 ? Math.round((completions / totalPossible) * 100) : 0,
-    };
-  });
 
-  // Category breakdown with completion counts
+
+  // Category breakdown
   const categoryInfo = habits.reduce<Record<string, { habitCount: number; totalCompletions: number; color: string }>>((acc, h) => {
     if (!acc[h.category]) acc[h.category] = { habitCount: 0, totalCompletions: 0, color: h.color };
     acc[h.category].habitCount++;
@@ -140,7 +121,7 @@ export default function AnalyticsPage() {
     .sort((a, b) => b.streak - a.streak)
     .slice(0, 8);
 
-  // Summary stats (computed from live data)
+  // Summary stats
   const completedToday = habits.filter((h) =>
     h.completions.some((c) => c.date === today)
   ).length;
@@ -151,13 +132,57 @@ export default function AnalyticsPage() {
     ? (totalCompletions / allCompletionDates.size).toFixed(1)
     : "0";
 
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = currentDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
+  const getDayStatus = (dateStr: string) => {
+    const completedCount = habits.filter(h => h.completions.some(c => c.date === dateStr)).length;
+    if (completedCount === 0) return "none";
+    if (completedCount === habits.length) return "all";
+    return "partial";
+  };
+
+  // Calculate perfect days in current month
+  let perfectDaysCount = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    if (dateStr <= today && getDayStatus(dateStr) === "all") {
+      perfectDaysCount++;
+    }
+  }
+
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Theme-aware chart colors
+  const c = {
+    tick: isDark ? "#555" : "#9A948C",
+    tooltipBg: isDark ? "#1c1c1c" : "#FFFFFF",
+    tooltipBorder: isDark ? "#2a2a2a" : "#E0D8CC",
+    tooltipText: isDark ? "#f5f5f5" : "#1a1a1a",
+    grid: isDark ? "#1e1e1e" : "#E0D8CC",
+    olive: isDark ? "#6b8c3a" : "#5A7832",
+    oliveLight: isDark ? "#8baf48" : "#4A6828",
+    empty: isDark ? "#1a1a1a" : "#E8E2D8",
+    legendText: isDark ? "#888" : "#6B6560",
+    
+    // Calendar colors
+    calBg: isDark ? "#1c1c1c" : "#ffffff",
+    cellEmpty: isDark ? "#232323" : "#f0f0f0",
+    cellPartial: isDark ? "#5A7832" : "#a6c97a", // Olive mid
+    cellAll: isDark ? "#8baf48" : "#6b8c3a",     // Olive light
+  };
 
   const tooltipStyle = {
-    background: "#222222",
-    border: "1px solid #2D2D2A",
+    background: c.tooltipBg,
+    border: `1px solid ${c.tooltipBorder}`,
     borderRadius: "8px",
-    color: "#FAF6F0",
+    color: c.tooltipText,
     fontSize: "12px",
     padding: "8px 12px",
   };
@@ -166,8 +191,8 @@ export default function AnalyticsPage() {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw size={20} className="text-[#6b8c3a] animate-spin" />
-          <span className="text-[#9F9A8C] text-sm">Loading analytics…</span>
+          <RefreshCw size={20} className="text-olive animate-spin" />
+          <span className="text-muted text-sm">Loading analytics…</span>
         </div>
       </div>
     );
@@ -178,14 +203,14 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">Analytics</h1>
-          <p className="text-[#9F9A8C] text-sm mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Analytics</h1>
+          <p className="text-muted text-sm mt-1">
             Live data · Updated {lastRefresh.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
           </p>
         </div>
         <button
           onClick={fetchData}
-          className="p-2 rounded-lg bg-[#1A1A1A] border border-[#2D2D2A] text-[#9F9A8C] hover:text-[#8baf48] hover:border-[#6b8c3a]/40 transition-colors"
+          className="p-2 rounded-lg bg-surface border border-border text-muted hover:text-olive-light hover:border-olive/40 transition-colors"
           title="Refresh data"
         >
           <RefreshCw size={16} />
@@ -200,143 +225,141 @@ export default function AnalyticsPage() {
           { label: "Best Streak", value: bestStreak, icon: Flame, suffix: " days" },
           { label: "Avg/Day", value: avgCompletionsPerDay, icon: Calendar, suffix: "" },
         ].map(({ label, value, icon: Icon, suffix }) => (
-          <div key={label} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
+          <div key={label} className="bg-surface border border-border rounded-xl p-3 sm:p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Icon size={14} className="text-[#6b8c3a] flex-shrink-0" />
-              <p className="text-[10px] sm:text-xs text-[#9F9A8C] truncate">{label}</p>
+              <Icon size={14} className="text-olive flex-shrink-0" />
+              <p className="text-[10px] sm:text-xs text-muted truncate">{label}</p>
             </div>
-            <p className="text-lg sm:text-xl font-bold text-[#FAF6F0]">
+            <p className="text-lg sm:text-xl font-bold text-foreground">
               {value}{suffix}
             </p>
           </div>
         ))}
       </div>
 
-      {/* Daily Activity — Current Month */}
-      {(() => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDayOfWeek = new Date(year, month, 1).getDay();
-        const monthName = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      {/* Monthly Calendar Widget */}
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6" style={{ backgroundColor: c.calBg }}>
+        {/* Navigation & Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
+              className="p-1.5 rounded-lg hover:bg-surface-2 text-muted hover:text-foreground transition-colors"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <h3 className="text-lg font-semibold text-foreground">{monthName}</h3>
+            <button
+              onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
+              className="p-1.5 rounded-lg hover:bg-surface-2 text-muted hover:text-foreground transition-colors disabled:opacity-30"
+              disabled={new Date(year, month + 1, 1) > new Date()}
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+          <span className="text-sm font-medium text-muted">
+            {perfectDaysCount} perfect day{perfectDaysCount !== 1 ? 's' : ''}
+          </span>
+        </div>
 
-        // Build all days of the month
-        const monthDays = Array.from({ length: daysInMonth }, (_, i) => {
-          const dayNum = i + 1;
-          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
-          const completed = habits.filter((h) =>
-            h.completions.some((c) => c.date === dateStr)
-          ).length;
-          const total = habits.length;
-          const ratio = total > 0 ? completed / total : 0;
-          const allDone = total > 0 && completed === total;
-          const isFuture = dateStr > today;
-          return { dayNum, dateStr, completed, total, ratio, allDone, isFuture };
-        });
-
-        const perfectDays = monthDays.filter((d) => d.allDone).length;
-        const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-        // Color function: none=dark, partial=faded green, all=solid green
-        const getColor = (d: typeof monthDays[0]) => {
-          if (d.isFuture) return "#111111";
-          if (d.allDone) return "#6b8c3a";
-          if (d.ratio > 0) return `rgba(107,140,58,${0.15 + d.ratio * 0.45})`;
-          return "#161B22";
-        };
-
-        return (
-          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-[#FAF6F0] text-sm">{monthName}</h3>
-              <span className="text-[10px] text-[#6B665A]">
-                {perfectDays} perfect day{perfectDays !== 1 ? "s" : ""}
-              </span>
+        {/* Day labels */}
+        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-2">
+          {days.map((d) => (
+            <div key={d} className="text-center text-xs text-muted font-medium mb-2">
+              {d}
             </div>
+          ))}
+        </div>
 
-            {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-1.5 mb-1">
-              {weekdays.map((d) => (
-                <div key={d} className="text-center text-[9px] sm:text-[10px] text-[#6B665A] font-semibold py-0.5">
-                  {d}
-                </div>
-              ))}
-            </div>
+        {/* Calendar cells */}
+        <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          {Array.from({ length: firstDay }).map((_, i) => (
+            <div key={`pad-${i}`} className="aspect-square" />
+          ))}
 
-            {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-1.5">
-              {/* Empty cells for padding */}
-              {Array.from({ length: firstDayOfWeek }).map((_, i) => (
-                <div key={`pad-${i}`} className="h-9 sm:h-10" />
-              ))}
+          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const status = getDayStatus(dateStr);
+            const isToday = dateStr === today;
+            const isFuture = dateStr > today;
 
-              {monthDays.map((day) => {
-                const isToday = day.dateStr === today;
+            let bgColor = c.cellEmpty;
+            let textColor = isDark ? "#666" : "#aaa";
+            let borderColor = "transparent";
 
-                return (
-                  <div
-                    key={day.dateStr}
-                    className={`h-9 sm:h-10 rounded-lg flex items-center justify-center text-xs font-bold transition-all ${
-                      isToday ? "ring-1.5 ring-[#8baf48] ring-offset-1 ring-offset-[#1A1A1A]" : ""
-                    } ${day.isFuture ? "opacity-20" : ""}`}
-                    style={{ backgroundColor: getColor(day) }}
-                    title={
-                      day.isFuture
-                        ? day.dateStr
-                        : `${day.dateStr}: ${day.completed}/${day.total} habits${day.allDone ? " ✓ All done!" : ""}`
-                    }
-                  >
-                    <span className={
-                      day.isFuture
-                        ? "text-[#3A3A3A]"
-                        : day.allDone
-                        ? "text-white"
-                        : day.ratio > 0
-                        ? "text-[#c8e6a0]"
-                        : "text-[#4A4A4A]"
-                    }>
-                      {day.dayNum}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            if (!isFuture) {
+              if (status === "all") {
+                bgColor = c.cellAll;
+                textColor = "#fff";
+                if (isToday) borderColor = "rgba(255,255,255,0.3)";
+              } else if (status === "partial") {
+                bgColor = c.cellPartial;
+                textColor = "#fff";
+                if (isToday) borderColor = "rgba(255,255,255,0.3)";
+              } else {
+                textColor = isDark ? "#888" : "#888";
+                if (isToday) borderColor = isDark ? "#555" : "#ccc";
+              }
+            }
 
-            {/* Legend */}
-            <div className="flex items-center justify-between mt-3">
-              <span className="text-[10px] text-[#6B665A]">All habits done = solid green</span>
-              <div className="flex items-center gap-1 text-[10px] text-[#6B665A]">
-                <div className="w-[10px] h-[10px] rounded-sm" style={{ backgroundColor: "#161B22" }} />
-                <span>None</span>
-                <div className="w-[10px] h-[10px] rounded-sm ml-1" style={{ backgroundColor: "rgba(107,140,58,0.35)" }} />
-                <span>Partial</span>
-                <div className="w-[10px] h-[10px] rounded-sm ml-1" style={{ backgroundColor: "#6b8c3a" }} />
-                <span>All</span>
+            return (
+              <div
+                key={day}
+                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-medium transition-all shadow-sm ${
+                  isFuture ? "opacity-50" : "hover:brightness-110"
+                }`}
+                style={{
+                  backgroundColor: bgColor,
+                  color: textColor,
+                  border: `2px solid ${borderColor}`,
+                }}
+              >
+                {day}
               </div>
+            );
+          })}
+        </div>
+
+        {/* Calendar legend */}
+        <div className="flex items-center justify-between mt-8 text-xs text-muted font-medium gap-4 flex-wrap">
+          <span className="flex items-center">
+            All habits done = solid green
+          </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span>None</span>
+              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellEmpty }} />
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellPartial }} />
+              <span>Partial</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellAll }} />
+              <span>All</span>
             </div>
           </div>
-        );
-      })()}
+        </div>
+      </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+      <div className="mb-4 sm:mb-6">
         {/* 30-day trend */}
-        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">30-Day Completion Trend</h3>
-          <p className="text-[10px] text-[#6B665A] mb-4">Habits completed per day</p>
-          <ResponsiveContainer width="100%" height={200}>
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">30-Day Completion Trend</h3>
+          <p className="text-[10px] text-dim mb-4">Habits completed per day</p>
+          <ResponsiveContainer width="100%" height={240}>
             <LineChart data={last30}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
+              <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
               <XAxis
                 dataKey="date"
-                tick={{ fill: "#6B665A", fontSize: 10 }}
+                tick={{ fill: c.tick, fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 interval={6}
               />
               <YAxis
-                tick={{ fill: "#6B665A", fontSize: 11 }}
+                tick={{ fill: c.tick, fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
                 allowDecimals={false}
@@ -349,61 +372,26 @@ export default function AnalyticsPage() {
               <Line
                 type="monotone"
                 dataKey="completed"
-                stroke="#6b8c3a"
+                stroke={c.olive}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: "#8baf48", stroke: "#6b8c3a", strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
               />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Weekly rate */}
-        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">12-Week Success Rate</h3>
-          <p className="text-[10px] text-[#6B665A] mb-4">Percentage of habits completed each week</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={last12Weeks} barCategoryGap="25%">
-              <XAxis
-                dataKey="week"
-                tick={{ fill: "#6B665A", fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: "#6B665A", fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                unit="%"
-                domain={[0, 100]}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value) => [`${value}%`, "Success Rate"]}
-              />
-              <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
-                {last12Weeks.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={entry.rate > 0 ? "#6b8c3a" : "#1a1a1a"}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Streaks */}
-        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">Current Streaks</h3>
-          <p className="text-[10px] text-[#6B665A] mb-4">Consecutive days completed</p>
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">Current Streaks</h3>
+          <p className="text-[10px] text-dim mb-4">Consecutive days completed</p>
           {streakData.length === 0 || streakData.every((s) => s.streak === 0) ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Flame size={24} className="text-[#3D3D3A] mb-2" />
-              <p className="text-[#9F9A8C] text-sm">No active streaks</p>
-              <p className="text-[#6B665A] text-xs mt-1">Complete habits daily to build streaks!</p>
+              <Flame size={24} className="text-disabled mb-2" />
+              <p className="text-muted text-sm">No active streaks</p>
+              <p className="text-dim text-xs mt-1">Complete habits daily to build streaks!</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -414,11 +402,11 @@ export default function AnalyticsPage() {
                   const width = Math.max(8, (entry.streak / maxStreak) * 100);
                   return (
                     <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs text-[#9F9A8C] w-20 truncate flex-shrink-0">{entry.name}</span>
-                      <div className="flex-1 h-6 bg-[#1a1a1a] rounded-md overflow-hidden relative">
+                      <span className="text-xs text-muted w-20 truncate flex-shrink-0">{entry.name}</span>
+                      <div className="flex-1 h-6 bg-heatmap-empty rounded-md overflow-hidden relative">
                         <div
                           className="h-full rounded-md flex items-center justify-end pr-2 transition-all duration-500"
-                          style={{ width: `${width}%`, backgroundColor: "#6b8c3a" }}
+                          style={{ width: `${width}%`, backgroundColor: c.olive }}
                         >
                           <span className="text-[10px] font-bold text-white">{entry.streak}d</span>
                         </div>
@@ -431,13 +419,13 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Category breakdown */}
-        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-[#FAF6F0] mb-1 text-sm">Habits by Category</h3>
-          <p className="text-[10px] text-[#6B665A] mb-4">Distribution of your habits</p>
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">Habits by Category</h3>
+          <p className="text-[10px] text-dim mb-4">Distribution of your habits</p>
           {pieData.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Target size={24} className="text-[#3D3D3A] mb-2" />
-              <p className="text-[#9F9A8C] text-sm">No habits to analyze</p>
+              <Target size={24} className="text-disabled mb-2" />
+              <p className="text-muted text-sm">No habits to analyze</p>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
@@ -464,7 +452,7 @@ export default function AnalyticsPage() {
                 />
                 <Legend
                   formatter={(value) => (
-                    <span style={{ color: "#9F9A8C", fontSize: "12px" }}>{value}</span>
+                    <span style={{ color: c.legendText, fontSize: "12px" }}>{value}</span>
                   )}
                 />
               </PieChart>

@@ -8,32 +8,32 @@ export default function AuthLayout({
 }) {
   return (
     <SessionWrapper>
-    <div className="min-h-screen bg-[#111111] flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left panel */}
-      <div className="hidden lg:flex flex-col w-1/2 bg-[#151515] border-r border-[#2D2D2A] p-12 relative overflow-hidden">
+      <div className="hidden lg:flex flex-col w-1/2 bg-sidebar-bg border-r border-sidebar-border p-12 relative overflow-hidden">
         {/* Background accent */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1C2412] via-transparent to-transparent" />
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#6b8c3a]/8 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-[#F5F0E8]/4 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-olive-bg via-transparent to-transparent" />
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-olive/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-olive-dark/10 rounded-full blur-3xl" />
 
         <div className="relative z-10 flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#6b8c3a] rounded-xl flex items-center justify-center">
-              <Flame size={20} className="text-[#FAF6F0]" />
+            <div className="w-10 h-10 bg-olive rounded-xl flex items-center justify-center">
+              <Flame size={20} className="text-white" />
             </div>
-            <span className="text-[#FAF6F0] font-bold text-2xl tracking-tight">
-              Ur<span className="text-[#8baf48]">Habit</span>
+            <span className="text-foreground font-bold text-2xl tracking-tight">
+              Ur<span className="text-olive-light">Habit</span>
             </span>
           </div>
 
           {/* Content */}
           <div className="mt-auto mb-16">
-            <h1 className="text-4xl font-bold text-[#FAF6F0] leading-tight mb-4">
-              Build <span className="text-[#8baf48]">discipline</span>,<br />
+            <h1 className="text-4xl font-bold text-foreground leading-tight mb-4">
+              Build <span className="text-olive-light">discipline</span>,<br />
               one day at a time.
             </h1>
-            <p className="text-[#9F9A8C] text-lg leading-relaxed max-w-sm">
+            <p className="text-muted text-lg leading-relaxed max-w-sm">
               Track habits, maintain streaks, earn achievements and gain AI
               insights to become your best self.
             </p>
@@ -47,10 +47,10 @@ export default function AuthLayout({
               ].map(({ v, label }) => (
                 <div
                   key={label}
-                  className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 text-center"
+                  className="bg-surface border border-border rounded-xl p-4 text-center"
                 >
                   <div className="text-2xl mb-1">{v}</div>
-                  <p className="text-xs text-[#9F9A8C]">{label}</p>
+                  <p className="text-xs text-muted">{label}</p>
                 </div>
               ))}
             </div>

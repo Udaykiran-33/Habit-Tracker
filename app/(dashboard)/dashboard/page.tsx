@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -23,8 +23,8 @@ import {
   Cell,
 } from "recharts";
 import Button from "@/components/ui/Button";
-import LevelUpPopup from "@/components/ui/LevelUpPopup";
 import toast from "react-hot-toast";
+import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface Habit {
   id: string;
@@ -48,17 +48,16 @@ interface DashStats {
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const { theme } = useTheme();
   const [habits, setHabits] = useState<Habit[]>([]);
   const [stats, setStats] = useState<DashStats | null>(null);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [levelUpInfo, setLevelUpInfo] = useState({ level: 0, title: "" });
-  const prevLevelRef = useRef<number | null>(null);
   const today = getTodayString();
 
-  const fetchData = useCallback(async () => {
+  const isDark = theme === "dark";
+
+  const fetchData = async () => {
     const [hRes, sRes] = await Promise.all([
       fetch("/api/habits"),
       fetch("/api/stats"),
@@ -73,19 +72,9 @@ export default function DashboardPage() {
 
     setHabits(enriched);
     setStats(statsData);
-    setLoading(false);
+  };
 
-    // Check for level-up
-    const newXp = statsData.xp ?? 0;
-    const newLevel = getLevel(newXp);
-    if (prevLevelRef.current !== null && newLevel > prevLevelRef.current) {
-      setLevelUpInfo({ level: newLevel, title: getLevelTitle(newLevel) });
-      setShowLevelUp(true);
-    }
-    prevLevelRef.current = newLevel;
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { fetchData(); }, []);
 
   const handleToggle = async (habitId: string) => {
     const res = await fetch("/api/completions", {
@@ -131,15 +120,26 @@ export default function DashboardPage() {
   const xpToNext = level * 100 - xp;
   const xpProgress = ((xp % 100) / 100) * 100;
 
+  // Theme-aware chart colors
+  const chartColors = {
+    tick: isDark ? "#888" : "#6B6560",
+    tooltipBg: isDark ? "#1c1c1c" : "#FFFFFF",
+    tooltipBorder: isDark ? "#2a2a2a" : "#E0D8CC",
+    tooltipText: isDark ? "#f5f5f5" : "#1a1a1a",
+    barInactive: isDark ? "#2a2a2a" : "#E0D8CC",
+    cursorFill: isDark ? "#1c1c1c" : "#F0EAE0",
+    olive: isDark ? "#6b8c3a" : "#5A7832",
+  };
+
   return (
     <div className="p-3 sm:p-6 lg:p-8 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-2xl font-bold text-[#FAF6F0] truncate">
+          <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
             Hi, {session?.user?.name?.split(" ")[0] ?? "there"} 👋
           </h1>
-          <p className="text-[#9F9A8C] text-xs sm:text-sm mt-0.5">
+          <p className="text-muted text-xs sm:text-sm mt-0.5">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
@@ -150,20 +150,20 @@ export default function DashboardPage() {
 
       {/* XP Bar */}
       {stats && (
-        <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-2.5 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2.5 sm:gap-4">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-[#6b8c3a]/20 rounded-full flex items-center justify-center text-[#8baf48] font-bold text-xs sm:text-sm flex-shrink-0">
+        <div className="bg-surface border border-border rounded-xl p-2.5 sm:p-4 mb-4 sm:mb-6 flex items-center gap-2.5 sm:gap-4">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-olive/20 rounded-full flex items-center justify-center text-olive-light font-bold text-xs sm:text-sm flex-shrink-0">
             {level}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs sm:text-sm font-medium text-[#FAF6F0] truncate">
+              <span className="text-xs sm:text-sm font-medium text-foreground truncate">
                 Level {level} — {levelTitle}
               </span>
-              <span className="text-[9px] sm:text-xs text-[#9F9A8C] flex-shrink-0 ml-2">{xp} XP · {xpToNext} to next</span>
+              <span className="text-[9px] sm:text-xs text-muted flex-shrink-0 ml-2">{xp} XP · {xpToNext} to next</span>
             </div>
-            <div className="h-1.5 bg-[#2D2D2A] rounded-full overflow-hidden">
+            <div className="h-1.5 bg-border rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#6b8c3a] rounded-full transition-all duration-500"
+                className="h-full bg-olive rounded-full transition-all duration-500"
                 style={{ width: `${xpProgress}%` }}
               />
             </div>
@@ -206,30 +206,15 @@ export default function DashboardPage() {
         {/* Habits list */}
         <div className="lg:col-span-2">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-semibold text-sm sm:text-base text-[#FAF6F0]">Today&apos;s Habits</h2>
-            <span className="text-[10px] sm:text-xs text-[#9F9A8C]">
+            <h2 className="font-semibold text-sm sm:text-base text-foreground">Today&apos;s Habits</h2>
+            <span className="text-[10px] sm:text-xs text-muted">
               {completedHabits.length}/{habits.length} done
             </span>
           </div>
-          {loading ? (
-            <div className="space-y-2 sm:space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 animate-pulse">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#2D2D2A] rounded-lg flex-shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 bg-[#2D2D2A] rounded w-1/3" />
-                      <div className="h-2 bg-[#2D2D2A] rounded w-1/5" />
-                    </div>
-                    <div className="w-8 h-8 bg-[#2D2D2A] rounded-full flex-shrink-0" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : habits.length === 0 ? (
-            <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-8 sm:p-10 text-center">
-              <Target size={28} className="text-[#3D3D3A] mx-auto mb-2" />
-              <p className="text-[#9F9A8C] text-sm">No habits yet</p>
+          {habits.length === 0 ? (
+            <div className="bg-surface border border-border border-dashed rounded-xl p-8 sm:p-10 text-center">
+              <Target size={28} className="text-disabled mx-auto mb-2" />
+              <p className="text-muted text-sm">No habits yet</p>
               <Button
                 size="sm"
                 className="mt-3"
@@ -256,42 +241,42 @@ export default function DashboardPage() {
 
         {/* Weekly Chart */}
         <div>
-          <h2 className="font-semibold text-sm sm:text-base text-[#FAF6F0] mb-3">Weekly Progress</h2>
-          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
+          <h2 className="font-semibold text-sm sm:text-base text-foreground mb-3">Weekly Progress</h2>
+          <div className="bg-surface border border-border rounded-xl p-3 sm:p-4">
             {stats?.weekly ? (
               <ResponsiveContainer width="100%" height={170}>
                 <BarChart data={stats.weekly} barCategoryGap="25%">
                   <XAxis
                     dataKey="day"
-                    tick={{ fill: "#9F9A8C", fontSize: 10 }}
+                    tick={{ fill: chartColors.tick, fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{
-                      background: "#222222",
-                      border: "1px solid #2D2D2A",
+                      background: chartColors.tooltipBg,
+                      border: `1px solid ${chartColors.tooltipBorder}`,
                       borderRadius: "8px",
-                      color: "#FAF6F0",
+                      color: chartColors.tooltipText,
                       fontSize: "11px",
                     }}
-                    cursor={{ fill: "#222222" }}
+                    cursor={{ fill: chartColors.cursorFill }}
                   />
                   <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
                     {stats.weekly.map((entry, i) => (
                       <Cell
                         key={i}
                         fill={entry.day === new Date().toLocaleDateString("en-US", { weekday: "short" })
-                          ? "#6b8c3a"
-                          : "#2D2D2A"}
+                          ? chartColors.olive
+                          : chartColors.barInactive}
                       />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-[170px] flex items-center justify-center text-[#9F9A8C] text-sm">
+              <div className="h-[170px] flex items-center justify-center text-muted text-sm">
                 No data yet
               </div>
             )}
@@ -299,8 +284,8 @@ export default function DashboardPage() {
 
           {/* Streak leaderboard */}
           {habits.filter((h) => h.streak > 0).length > 0 && (
-            <div className="mt-3 sm:mt-4 bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4">
-              <h3 className="text-xs sm:text-sm font-medium text-[#FAF6F0] mb-2 sm:mb-3">🔥 Active Streaks</h3>
+            <div className="mt-3 sm:mt-4 bg-surface border border-border rounded-xl p-3 sm:p-4">
+              <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Active Streaks</h3>
               <div className="space-y-1.5 sm:space-y-2">
                 {habits
                   .filter((h) => h.streak > 0)
@@ -310,7 +295,7 @@ export default function DashboardPage() {
                     <div key={h.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: h.color }} />
-                        <span className="text-xs sm:text-sm text-[#9F9A8C] truncate">{h.name}</span>
+                        <span className="text-xs sm:text-sm text-muted truncate">{h.name}</span>
                       </div>
                       <span className="text-[10px] sm:text-xs font-semibold text-orange-400 flex-shrink-0 ml-2">{h.streak}d 🔥</span>
                     </div>
@@ -326,13 +311,6 @@ export default function DashboardPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
-      />
-
-      <LevelUpPopup
-        level={levelUpInfo.level}
-        title={levelUpInfo.title}
-        show={showLevelUp}
-        onClose={() => setShowLevelUp(false)}
       />
     </div>
   );

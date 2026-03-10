@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
+import { cn, calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
 
 interface Habit {
   id: string;
@@ -49,7 +49,6 @@ export default function AchievementsPage() {
   const xpProgress = ((xp % 100) / 100) * 100;
 
   const achievements: Achievement[] = [
-    // Streak achievements
     {
       id: "streak_3",
       title: "Getting Started",
@@ -110,7 +109,6 @@ export default function AchievementsPage() {
       progress: Math.min(bestStreak, 100),
       target: 100,
     },
-    // Completion achievements
     {
       id: "comp_10",
       title: "First Steps",
@@ -151,7 +149,6 @@ export default function AchievementsPage() {
       progress: Math.min(totalCompletions, 500),
       target: 500,
     },
-    // Habit creation achievements
     {
       id: "habits_3",
       title: "Habit Collector",
@@ -172,7 +169,6 @@ export default function AchievementsPage() {
       progress: Math.min(habits.length, 5),
       target: 5,
     },
-    // XP/Level achievements
     {
       id: "level_5",
       title: "Consistent",
@@ -207,17 +203,17 @@ export default function AchievementsPage() {
 
   const unlocked = achievements.filter((a) => a.unlocked).length;
 
-  const typeColors: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-    bronze: { bg: "#1c1408", border: "border-orange-700/30", text: "text-orange-400", badge: "🥉" },
-    silver: { bg: "#141418", border: "border-slate-400/30", text: "text-slate-300", badge: "🥈" },
-    gold: { bg: "#1a1500", border: "border-yellow-500/30", text: "text-yellow-400", badge: "🥇" },
-    special: { bg: "#0a0a1a", border: "border-blue-400/30", text: "text-blue-400", badge: "💎" },
+  const typeColors: Record<string, { bg: string; bgLight: string; border: string; text: string; badge: string }> = {
+    bronze: { bg: "#1c1408", bgLight: "#FFF5E6", border: "border-orange-700/30", text: "text-orange-400", badge: "🥉" },
+    silver: { bg: "#141418", bgLight: "#F0F0F5", border: "border-slate-400/30", text: "text-slate-300", badge: "🥈" },
+    gold: { bg: "#1a1500", bgLight: "#FFF8E1", border: "border-yellow-500/30", text: "text-yellow-400", badge: "🥇" },
+    special: { bg: "#0a0a1a", bgLight: "#E8EAF6", border: "border-blue-400/30", text: "text-blue-400", badge: "💎" },
   };
 
   if (loading) {
     return (
       <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-[#9F9A8C] text-sm">Loading achievements…</div>
+        <div className="text-muted text-sm">Loading achievements…</div>
       </div>
     );
   }
@@ -225,30 +221,30 @@ export default function AchievementsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">Achievements</h1>
-        <p className="text-[#9F9A8C] text-sm mt-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">Achievements</h1>
+        <p className="text-muted text-sm mt-1">
           {unlocked}/{achievements.length} unlocked
         </p>
       </div>
 
       {/* Level Card */}
-      <div className="bg-[#1a2010] border border-[#6b8c3a]/40 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
+      <div className="bg-olive-bg border border-olive/40 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
         <div className="flex items-center gap-4 sm:gap-5">
-          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#6b8c3a]/20 border-2 border-[#6b8c3a] rounded-full flex items-center justify-center">
-            <span className="text-xl sm:text-2xl font-bold text-[#8baf48]">{level}</span>
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-olive/20 border-2 border-olive rounded-full flex items-center justify-center">
+            <span className="text-xl sm:text-2xl font-bold text-olive-light">{level}</span>
           </div>
           <div className="flex-1">
-            <h2 className="text-lg font-bold text-[#FAF6F0]">{levelTitle}</h2>
+            <h2 className="text-lg font-bold text-foreground">{levelTitle}</h2>
             <div className="flex items-center gap-3 mt-1">
-              <div className="flex-1 h-2 bg-[#2D2D2A] rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#6b8c3a] rounded-full transition-all"
+                  className="h-full bg-olive rounded-full transition-all"
                   style={{ width: `${xpProgress}%` }}
                 />
               </div>
-              <span className="text-xs text-[#9F9A8C] flex-shrink-0">{xp} XP</span>
+              <span className="text-xs text-muted flex-shrink-0">{xp} XP</span>
             </div>
-            <p className="text-xs text-[#9F9A8C] mt-1">
+            <p className="text-xs text-muted mt-1">
               {level * 100 - xp} XP to Level {level + 1}
             </p>
           </div>
@@ -262,15 +258,16 @@ export default function AchievementsPage() {
             return (
               <div key={i} className="text-center">
                 <div
-                  className={`w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold mb-1 border ${
+                  className={cn(
+                    "w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold mb-1 border",
                     reached
-                      ? "bg-[#6b8c3a] border-[#6b8c3a] text-white"
-                      : "bg-[#222222] border-[#2D2D2A] text-[#6B665A]"
-                  }`}
+                      ? "bg-olive border-olive text-white"
+                      : "bg-surface-2 border-border text-dim"
+                  )}
                 >
                   {lvl}
                 </div>
-                <p className="text-[9px] text-[#6B665A] leading-tight">{title}</p>
+                <p className="text-[9px] text-dim leading-tight">{title}</p>
               </div>
             );
           })}
@@ -280,7 +277,7 @@ export default function AchievementsPage() {
       {/* Achievements Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {achievements.map((a) => {
-          const c = typeColors[a.type];
+          const tc = typeColors[a.type];
           const progressPct = a.target
             ? Math.min(100, ((a.progress ?? 0) / a.target) * 100)
             : 0;
@@ -288,57 +285,57 @@ export default function AchievementsPage() {
           return (
             <div
               key={a.id}
-              className={`rounded-xl border p-4 transition-all ${
+              className={cn(
+                "rounded-xl border p-4 transition-all",
                 a.unlocked
-                  ? `border-opacity-100 ${c.border}`
-                  : "border-[#2D2D2A] opacity-60"
-              }`}
-              style={{ backgroundColor: a.unlocked ? c.bg : "#1A1A1A" }}
+                  ? `border-opacity-100 ${tc.border}`
+                  : "border-border opacity-60"
+              )}
+              style={{ backgroundColor: a.unlocked ? `var(--olive-bg)` : `var(--surface)` }}
             >
               <div className="flex items-start justify-between mb-3">
                 <span className="text-2xl">{a.unlocked ? a.icon : "🔒"}</span>
                 <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                  className={cn(
+                    "text-xs font-semibold px-2 py-0.5 rounded-full border",
                     a.unlocked
-                      ? `${c.text} border-current bg-current/10`
-                      : "text-[#6B665A] border-[#2D2D2A]"
-                  }`}
+                      ? `${tc.text} border-current bg-current/10`
+                      : "text-dim border-border"
+                  )}
                 >
                   {a.type.toUpperCase()}
                 </span>
               </div>
               <h3
-                className={`font-semibold text-sm mb-1 ${
-                  a.unlocked ? "text-[#FAF6F0]" : "text-[#6B665A]"
-                }`}
+                className={cn(
+                  "font-semibold text-sm mb-1",
+                  a.unlocked ? "text-foreground" : "text-dim"
+                )}
               >
                 {a.title}
               </h3>
-              <p className="text-xs text-[#9F9A8C] leading-relaxed mb-3">
+              <p className="text-xs text-muted leading-relaxed mb-3">
                 {a.description}
               </p>
 
               {/* Progress bar */}
               {a.target && !a.unlocked && (
                 <div className="mt-auto">
-                  <div className="flex items-center justify-between text-xs text-[#6B665A] mb-1">
+                  <div className="flex items-center justify-between text-xs text-dim mb-1">
                     <span>{a.progress}</span>
                     <span>{a.target}</span>
                   </div>
-                  <div className="h-1 bg-[#2D2D2A] rounded-full overflow-hidden">
+                  <div className="h-1 bg-border rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${progressPct}%`,
-                        backgroundColor: "#6b8c3a",
-                      }}
+                      className="h-full rounded-full bg-olive"
+                      style={{ width: `${progressPct}%` }}
                     />
                   </div>
                 </div>
               )}
 
               {a.unlocked && (
-                <div className={`text-xs font-medium ${c.text} mt-1`}>
+                <div className={`text-xs font-medium ${tc.text} mt-1`}>
                   ✓ Unlocked
                 </div>
               )}

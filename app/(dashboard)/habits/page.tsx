@@ -4,7 +4,7 @@ import { Plus, Search, Filter } from "lucide-react";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
 import Button from "@/components/ui/Button";
-import { getTodayString, calculateStreak, HABIT_CATEGORIES } from "@/lib/utils";
+import { cn, getTodayString, calculateStreak, HABIT_CATEGORIES } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface Habit {
@@ -20,7 +20,6 @@ interface Habit {
 export default function HabitsPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [filtered, setFiltered] = useState<Habit[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -35,7 +34,6 @@ export default function HabitsPage() {
       streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
     }));
     setHabits(enriched);
-    setLoading(false);
   };
 
   useEffect(() => { fetchHabits(); }, []);
@@ -93,8 +91,8 @@ export default function HabitsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">My Habits</h1>
-          <p className="text-[#9F9A8C] text-sm mt-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">My Habits</h1>
+          <p className="text-muted text-sm mt-1">
             {completedCount}/{habits.length} completed today
           </p>
         </div>
@@ -108,22 +106,22 @@ export default function HabitsPage() {
         <div className="relative flex-1">
           <Search
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B665A]"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-dim"
           />
           <input
             type="text"
             placeholder="Search habits…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg pl-9 pr-4 py-2.5 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a]"
+            className="w-full bg-surface border border-border rounded-lg pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-dim focus:outline-none focus:border-olive"
           />
         </div>
         <div className="flex items-center gap-2">
-          <Filter size={15} className="text-[#6B665A]" />
+          <Filter size={15} className="text-dim" />
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg px-3 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a]"
+            className="bg-surface border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-olive"
           >
             <option value="All">All Categories</option>
             {HABIT_CATEGORIES.map((c) => (
@@ -145,11 +143,12 @@ export default function HabitsPage() {
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
                 category === cat
-                  ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-                  : "bg-[#1A1A1A] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
-              }`}
+                  ? "bg-olive/20 border-olive text-olive-light"
+                  : "bg-surface border-border text-muted hover:border-border-hover"
+              )}
             >
               {cat} {count > 0 && <span className="ml-1 opacity-60">{count}</span>}
             </button>
@@ -158,23 +157,8 @@ export default function HabitsPage() {
       </div>
 
       {/* Habits List */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 animate-pulse">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-[#2D2D2A] rounded-lg flex-shrink-0" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 bg-[#2D2D2A] rounded w-2/5" />
-                  <div className="h-2 bg-[#2D2D2A] rounded w-1/5" />
-                </div>
-                <div className="w-8 h-8 bg-[#2D2D2A] rounded-full flex-shrink-0" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-[#9F9A8C]">
+      {filtered.length === 0 ? (
+        <div className="text-center py-16 text-muted">
           <p className="text-4xl mb-3">🎯</p>
           <p className="text-sm">
             {habits.length === 0

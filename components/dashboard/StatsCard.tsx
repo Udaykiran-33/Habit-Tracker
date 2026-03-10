@@ -23,33 +23,33 @@ export default function StatsCard({
       className={cn(
         "rounded-xl border p-3 sm:p-4 lg:p-5 flex flex-col gap-1 sm:gap-2",
         accent
-          ? "bg-[#1C2412] border-[#6b8c3a]/40"
-          : "bg-[#1A1A1A] border-[#2D2D2A]"
+          ? "bg-olive-bg border-olive/40"
+          : "bg-surface border-border"
       )}
     >
       <div className="flex items-center justify-between gap-1">
-        <p className="text-[11px] sm:text-sm text-[#9F9A8C] font-medium leading-tight">{label}</p>
+        <p className="text-[11px] sm:text-sm text-muted font-medium leading-tight">{label}</p>
         <div
           className={cn(
             "p-1.5 sm:p-2 rounded-lg flex-shrink-0",
-            accent ? "bg-[#6b8c3a]/20" : "bg-[#222222]"
+            accent ? "bg-olive/20" : "bg-surface-2"
           )}
         >
           <Icon
             size={14}
-            className={cn("sm:w-4 sm:h-4", accent ? "text-[#8baf48]" : "text-[#9F9A8C]")}
+            className={cn("sm:w-4 sm:h-4", accent ? "text-olive-light" : "text-muted")}
           />
         </div>
       </div>
       <div>
-        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-[#FAF6F0] leading-none">{value}</p>
-        {sub && <p className="text-[10px] sm:text-xs text-[#9F9A8C] mt-0.5 sm:mt-1">{sub}</p>}
+        <p className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground leading-none">{value}</p>
+        {sub && <p className="text-[10px] sm:text-xs text-muted mt-0.5 sm:mt-1">{sub}</p>}
       </div>
       {trend !== undefined && (
         <p
           className={cn(
             "text-[10px] sm:text-xs font-medium",
-            trend >= 0 ? "text-[#8baf48]" : "text-red-400"
+            trend >= 0 ? "text-olive-light" : "text-red-400"
           )}
         >
           {trend >= 0 ? "↑" : "↓"} {Math.abs(trend)}% vs last week

@@ -17,17 +17,17 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#111111] disabled:opacity-50 disabled:cursor-not-allowed",
+          "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ring-offset disabled:opacity-50 disabled:cursor-not-allowed",
           {
-            "bg-[#6b8c3a] text-[#FAF6F0] hover:bg-[#7a9e43] focus:ring-[#6b8c3a]":
+            "bg-olive text-white hover:bg-olive-light focus:ring-olive":
               variant === "primary",
-            "bg-[#222222] text-[#FAF6F0] border border-[#2D2D2A] hover:bg-[#2D2D2A] focus:ring-[#6b8c3a]":
+            "bg-surface-2 text-foreground border border-border hover:bg-border focus:ring-olive":
               variant === "secondary",
-            "text-[#9F9A8C] hover:text-[#FAF6F0] hover:bg-[#222222] focus:ring-[#6b8c3a]":
+            "text-muted hover:text-foreground hover:bg-surface-2 focus:ring-olive":
               variant === "ghost",
             "bg-red-600/10 text-red-400 border border-red-600/20 hover:bg-red-600/20 focus:ring-red-500":
               variant === "danger",
-            "border border-[#6b8c3a] text-[#6b8c3a] hover:bg-[#6b8c3a]/10 focus:ring-[#6b8c3a]":
+            "border border-olive text-olive hover:bg-olive/10 focus:ring-olive":
               variant === "outline",
           },
           {

@@ -159,43 +159,43 @@ export default function AdminPage() {
   /* ────────── LOGIN SCREEN ────────── */
   if (!authed) {
     return (
-      <div className="min-h-screen bg-[#111111] flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4 transition-colors" style={{ backgroundColor: "var(--background)" }}>
         {/* Background accents */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-[#6b8c3a]/5 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-[#F5F0E8]/3 rounded-full blur-[120px]" />
+          <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-[var(--olive-mid)]/5 rounded-full blur-[120px]" />
+          <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-[var(--surface-2)]/30 rounded-full blur-[120px]" />
         </div>
 
         <div className="relative w-full max-w-sm">
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-11 h-11 bg-[#6b8c3a] rounded-xl flex items-center justify-center shadow-lg shadow-[#6b8c3a]/20">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-colors" style={{ backgroundColor: "var(--olive-mid)", boxShadow: "0 10px 15px -3px var(--olive-bg)" }}>
               <Flame size={22} className="text-[#FAF6F0]" />
             </div>
-            <span className="text-[#FAF6F0] font-bold text-2xl tracking-tight">
-              Ur<span className="text-[#8baf48]">Habit</span>
+            <span className="font-bold text-2xl tracking-tight transition-colors" style={{ color: "var(--foreground)" }}>
+              Ur<span className="transition-colors" style={{ color: "var(--olive-light)" }}>Habit</span>
             </span>
           </div>
 
           {/* Login Card */}
-          <div className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div className="border rounded-2xl p-6 sm:p-8 shadow-2xl transition-colors" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
             <div className="text-center mb-6">
-              <div className="w-12 h-12 bg-[#6b8c3a]/15 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Lock size={20} className="text-[#8baf48]" />
+              <div className="w-12 h-12 bg-[var(--olive-mid)]/15 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <Lock size={20} className="transition-colors" style={{ color: "var(--olive-light)" }} />
               </div>
-              <h1 className="text-xl font-bold text-[#FAF6F0]">Admin Portal</h1>
-              <p className="text-[#9F9A8C] text-sm mt-1">
+              <h1 className="text-xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>Admin Portal</h1>
+              <p className="text-sm mt-1 transition-colors" style={{ color: "var(--muted)" }}>
                 Enter the admin password to continue
               </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-[#FAF6F0] mb-1.5 block">
+                <label className="text-sm font-medium mb-1.5 block transition-colors" style={{ color: "var(--foreground)" }}>
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9F9A8C]">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: "var(--muted)" }}>
                     <Lock size={16} />
                   </div>
                   <input
@@ -206,27 +206,38 @@ export default function AdminPage() {
                       setLoginError("");
                     }}
                     placeholder="Enter admin password"
-                    className="w-full bg-[#151515] border border-[#2D2D2A] rounded-xl pl-10 pr-10 py-3 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a] transition-colors"
+                    className="w-full border rounded-xl pl-10 pr-10 py-3 text-sm focus:outline-none focus:border-[var(--olive-light)] focus:ring-1 focus:ring-[var(--olive-light)] transition-colors"
+                    style={{ 
+                      backgroundColor: "var(--background)", 
+                      borderColor: "var(--border)",
+                      color: "var(--foreground)"
+                    }}
                     autoFocus
                   />
                   <button
                     type="button"
                     onClick={() => setShowPw((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6B665A] hover:text-[#9F9A8C] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                    style={{ color: "var(--muted)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "var(--foreground)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "var(--muted)")}
                     tabIndex={-1}
                   >
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
                 {loginError && (
-                  <p className="text-xs text-red-400 mt-1.5">{loginError}</p>
+                  <p className="text-xs text-red-500 mt-1.5">{loginError}</p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={loginLoading}
-                className="w-full bg-[#6b8c3a] hover:bg-[#7a9e43] text-[#FAF6F0] font-medium py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full font-medium py-3 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{ backgroundColor: "var(--olive-mid)", color: "#FAF6F0" }}
+                onMouseEnter={(e) => !loginLoading && (e.currentTarget.style.backgroundColor = "var(--olive-light)")}
+                onMouseLeave={(e) => !loginLoading && (e.currentTarget.style.backgroundColor = "var(--olive-mid)")}
               >
                 {loginLoading ? (
                   <>
@@ -258,7 +269,7 @@ export default function AdminPage() {
             </form>
           </div>
 
-          <p className="text-center text-[10px] text-[#6B665A] mt-6">
+          <p className="text-center text-[10px] mt-6 transition-colors" style={{ color: "var(--muted)" }}>
             UrHabit Admin • Restricted Access
           </p>
         </div>
@@ -268,18 +279,18 @@ export default function AdminPage() {
 
   /* ────────── ADMIN DASHBOARD ────────── */
   return (
-    <div className="min-h-screen bg-[#111111]">
+    <div className="min-h-screen transition-colors" style={{ backgroundColor: "var(--background)" }}>
       {/* Top bar */}
-      <header className="sticky top-0 z-30 bg-[#151515]/90 backdrop-blur-lg border-b border-[#2D2D2A]">
+      <header className="sticky top-0 z-30 backdrop-blur-lg border-b transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--surface) 90%, transparent)", borderColor: "var(--border)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: "var(--olive-mid)" }}>
               <Flame size={16} className="text-[#FAF6F0]" />
             </div>
-            <span className="text-[#FAF6F0] font-bold text-lg tracking-tight">
-              Ur<span className="text-[#8baf48]">Habit</span>
+            <span className="font-bold text-lg tracking-tight transition-colors" style={{ color: "var(--foreground)" }}>
+              Ur<span className="transition-colors" style={{ color: "var(--olive-light)" }}>Habit</span>
             </span>
-            <span className="text-[#6B665A] text-xs font-medium ml-1 hidden sm:inline">
+            <span className="text-xs font-medium ml-1 hidden sm:inline transition-colors" style={{ color: "var(--muted)" }}>
               / Admin
             </span>
           </div>
@@ -288,7 +299,8 @@ export default function AdminPage() {
               setAuthed(false);
               setPassword("");
             }}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-[#9F9A8C] hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all hover:text-red-500 hover:bg-red-500/10"
+            style={{ color: "var(--muted)" }}
           >
             <LogOut size={15} />
             <span className="hidden sm:inline">Sign Out</span>
@@ -299,10 +311,10 @@ export default function AdminPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Page Title */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">
+          <h1 className="text-xl sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
             Feedback Dashboard
           </h1>
-          <p className="text-[#9F9A8C] text-sm mt-1">
+          <p className="text-sm mt-1 transition-colors" style={{ color: "var(--muted)" }}>
             Manage and review user feedback
           </p>
         </div>
@@ -345,7 +357,8 @@ export default function AdminPage() {
             return (
               <div
                 key={s.label}
-                className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-3 sm:p-4 hover:border-[#3D3D3A] transition-all group"
+                className="border rounded-xl p-3 sm:p-4 transition-all group hover:border-[var(--muted)]"
+                style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
               >
                 <div className="flex items-center justify-between mb-2">
                   <div
@@ -354,12 +367,12 @@ export default function AdminPage() {
                   >
                     <Icon size={15} style={{ color: s.color }} />
                   </div>
-                  <TrendingUp size={12} className="text-[#3D3D3A]" />
+                  <TrendingUp size={12} className="transition-colors" style={{ color: "var(--muted)" }} />
                 </div>
-                <p className="text-lg sm:text-2xl font-bold text-[#FAF6F0]">
+                <p className="text-lg sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
                   {s.value}
                 </p>
-                <p className="text-[10px] sm:text-xs text-[#6B665A] mt-0.5">
+                <p className="text-[10px] sm:text-xs mt-0.5 transition-colors" style={{ color: "var(--muted)" }}>
                   {s.label}
                 </p>
               </div>
@@ -373,24 +386,35 @@ export default function AdminPage() {
           <div className="relative flex-1">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B665A]"
+              className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: "var(--muted)" }}
             />
             <input
               type="text"
               placeholder="Search by name, email, or message…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a] transition-colors"
+              className="w-full border rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-[var(--olive-light)] transition-colors"
+              style={{ 
+                backgroundColor: "var(--surface)", 
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
             />
           </div>
 
           {/* Category Filter */}
           <div className="flex items-center gap-2">
-            <Filter size={15} className="text-[#6B665A] flex-shrink-0" />
+            <Filter size={15} className="flex-shrink-0 transition-colors" style={{ color: "var(--muted)" }} />
             <select
               value={catFilter}
               onChange={(e) => setCatFilter(e.target.value)}
-              className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl px-3 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a] cursor-pointer"
+              className="border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--olive-light)] cursor-pointer transition-colors"
+              style={{ 
+                backgroundColor: "var(--surface)", 
+                borderColor: "var(--border)",
+                color: "var(--foreground)"
+              }}
             >
               <option value="all">All Categories</option>
               <option value="feature_request">Feature Requests</option>
@@ -405,7 +429,8 @@ export default function AdminPage() {
             onClick={() =>
               setSortOrder((o) => (o === "newest" ? "oldest" : "newest"))
             }
-            className="flex items-center gap-1.5 px-3 py-2.5 bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl text-sm text-[#9F9A8C] hover:border-[#3D3D3A] transition-all flex-shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2.5 border rounded-xl text-sm transition-all flex-shrink-0 hover:border-[var(--muted)]"
+            style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)", color: "var(--muted)" }}
           >
             {sortOrder === "newest" ? (
               <ChevronDown size={14} />
@@ -417,7 +442,7 @@ export default function AdminPage() {
         </div>
 
         {/* Results count */}
-        <p className="text-xs text-[#6B665A] mb-4">
+        <p className="text-xs mb-4 transition-colors" style={{ color: "var(--muted)" }}>
           Showing {filtered.length} of {feedbacks.length} feedback entries
         </p>
 
@@ -427,28 +452,30 @@ export default function AdminPage() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-5 animate-pulse"
+                className="border rounded-xl p-5 animate-pulse transition-colors"
+                style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-9 h-9 bg-[#2D2D2A] rounded-full" />
+                  <div className="w-9 h-9 rounded-full" style={{ backgroundColor: "var(--surface-2)" }} />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3 bg-[#2D2D2A] rounded w-1/4" />
-                    <div className="h-2 bg-[#2D2D2A] rounded w-1/6" />
+                    <div className="h-3 rounded w-1/4" style={{ backgroundColor: "var(--surface-2)" }} />
+                    <div className="h-2 rounded w-1/6" style={{ backgroundColor: "var(--surface-2)" }} />
                   </div>
-                  <div className="h-5 bg-[#2D2D2A] rounded-full w-20" />
+                  <div className="h-5 rounded-full w-20" style={{ backgroundColor: "var(--surface-2)" }} />
                 </div>
-                <div className="h-2 bg-[#2D2D2A] rounded w-3/4 mb-2" />
-                <div className="h-2 bg-[#2D2D2A] rounded w-1/2" />
+                <div className="h-2 rounded w-3/4 mb-2" style={{ backgroundColor: "var(--surface-2)" }} />
+                <div className="h-2 rounded w-1/2" style={{ backgroundColor: "var(--surface-2)" }} />
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-12 text-center">
+          <div className="border border-dashed rounded-xl p-12 text-center transition-colors" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
             <MessageSquare
               size={32}
-              className="text-[#3D3D3A] mx-auto mb-3"
+              className="mx-auto mb-3 transition-colors"
+              style={{ color: "var(--muted)" }}
             />
-            <p className="text-[#9F9A8C] text-sm">
+            <p className="text-sm transition-colors" style={{ color: "var(--muted)" }}>
               {feedbacks.length === 0
                 ? "No feedback received yet"
                 : "No feedback matches your filters"}
@@ -471,21 +498,24 @@ export default function AdminPage() {
               return (
                 <div
                   key={fb._id}
-                  className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 sm:p-5 hover:border-[#3D3D3A] transition-all"
+                  className="border rounded-xl p-4 sm:p-5 transition-all"
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--muted)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
                 >
                   {/* Header row */}
                   <div className="flex items-start gap-3 mb-3">
                     {/* Avatar */}
-                    <div className="w-9 h-9 rounded-full bg-[#6b8c3a]/15 flex items-center justify-center text-[#8baf48] text-xs font-bold flex-shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-[var(--olive-mid)]/15 flex items-center justify-center text-[var(--olive-light)] text-xs font-bold flex-shrink-0">
                       {initials}
                     </div>
 
                     {/* Name + email + date */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#FAF6F0] truncate">
+                      <p className="text-sm font-medium truncate transition-colors" style={{ color: "var(--foreground)" }}>
                         {fb.userName}
                       </p>
-                      <p className="text-[10px] text-[#6B665A] truncate">
+                      <p className="text-[10px] truncate transition-colors" style={{ color: "var(--muted)" }}>
                         {fb.userEmail}
                       </p>
                     </div>
@@ -501,7 +531,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Message body */}
-                  <p className="text-sm text-[#C8C3B8] leading-relaxed whitespace-pre-wrap">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap transition-colors" style={{ color: "var(--foreground)" }}>
                     {isLong && !isExpanded
                       ? fb.message.slice(0, 200) + "…"
                       : fb.message}
@@ -511,14 +541,15 @@ export default function AdminPage() {
                       onClick={() =>
                         setExpandedId(isExpanded ? null : fb._id)
                       }
-                      className="text-xs text-[#8baf48] hover:underline mt-1"
+                      className="text-xs hover:underline mt-1 transition-colors"
+                      style={{ color: "var(--olive-light)" }}
                     >
                       {isExpanded ? "Show less" : "Read more"}
                     </button>
                   )}
 
                   {/* Footer */}
-                  <div className="flex items-center gap-1.5 mt-3 text-[10px] text-[#6B665A]">
+                  <div className="flex items-center gap-1.5 mt-3 text-[10px] transition-colors" style={{ color: "var(--muted)" }}>
                     <CalendarDays size={10} />
                     {new Date(fb.createdAt).toLocaleDateString("en-US", {
                       weekday: "short",

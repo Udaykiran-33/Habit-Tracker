@@ -45,7 +45,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto-login after registration
       const result = await signIn("credentials", {
         email: form.email.trim().toLowerCase(),
         password: form.password,
@@ -54,13 +53,11 @@ export default function RegisterPage() {
 
       if (result?.ok) {
         toast.success("Account created! Welcome to UrHabit 🔥");
-        window.location.href = "/dashboard";
-        return;
+        router.refresh();
+        router.push("/dashboard");
       } else {
-        // Registration succeeded but auto-login failed; redirect to login
         toast.success("Account created! Please sign in.");
-        window.location.href = "/login";
-        return;
+        router.push("/login");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -73,17 +70,17 @@ export default function RegisterPage() {
     <div>
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
-        <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-          <Flame size={16} className="text-[#FAF6F0]" />
+        <div className="w-8 h-8 bg-olive rounded-lg flex items-center justify-center">
+          <Flame size={16} className="text-white" />
         </div>
-        <span className="text-[#FAF6F0] font-bold text-xl">
-          Ur<span className="text-[#8baf48]">Habit</span>
+        <span className="text-foreground font-bold text-xl">
+          Ur<span className="text-olive-light">Habit</span>
         </span>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#FAF6F0]">Start your journey</h2>
-        <p className="text-[#9F9A8C] mt-1 text-sm">
+        <h2 className="text-2xl font-bold text-foreground">Start your journey</h2>
+        <p className="text-muted mt-1 text-sm">
           Create your account and begin tracking today
         </p>
       </div>
@@ -130,11 +127,11 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#9F9A8C] mt-6">
+      <p className="text-center text-sm text-muted mt-6">
         Already have an account?{" "}
         <Link
           href="/login"
-          className="text-[#8baf48] hover:underline font-medium"
+          className="text-olive-light hover:underline font-medium"
         >
           Sign in
         </Link>

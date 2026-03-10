@@ -10,9 +10,9 @@ export function Card({ className, glass, hover, children, ...props }: CardProps)
   return (
     <div
       className={cn(
-        "rounded-xl border border-[#2a2a2a] bg-[#141414] p-5",
-        glass && "bg-[#141414]/80 backdrop-blur-sm",
-        hover && "hover:border-[#6b8c3a]/40 transition-colors cursor-pointer",
+        "rounded-xl border border-border bg-surface p-5",
+        glass && "bg-surface/80 backdrop-blur-sm",
+        hover && "hover:border-olive/40 transition-colors cursor-pointer",
         className
       )}
       {...props}
@@ -32,7 +32,7 @@ export function CardHeader({ className, children, ...props }: HTMLAttributes<HTM
 
 export function CardTitle({ className, children, ...props }: HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn("text-base font-semibold text-[#f5f5f5]", className)} {...props}>
+    <h3 className={cn("text-base font-semibold text-foreground", className)} {...props}>
       {children}
     </h3>
   );

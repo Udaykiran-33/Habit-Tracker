@@ -31,8 +31,8 @@ export default function LoginPage() {
         toast.error("Invalid email or password");
       } else if (result?.ok) {
         toast.success("Welcome back!");
-        window.location.href = "/dashboard";
-        return;
+        router.refresh();
+        router.push("/dashboard");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
@@ -45,17 +45,17 @@ export default function LoginPage() {
     <div>
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
-        <div className="w-8 h-8 bg-[#6b8c3a] rounded-lg flex items-center justify-center">
-          <Flame size={16} className="text-[#FAF6F0]" />
+        <div className="w-8 h-8 bg-olive rounded-lg flex items-center justify-center">
+          <Flame size={16} className="text-white" />
         </div>
-        <span className="text-[#FAF6F0] font-bold text-xl">
-          Ur<span className="text-[#8baf48]">Habit</span>
+        <span className="text-foreground font-bold text-xl">
+          Ur<span className="text-olive-light">Habit</span>
         </span>
       </div>
 
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-[#FAF6F0]">Welcome back</h2>
-        <p className="text-[#9F9A8C] mt-1 text-sm">
+        <h2 className="text-2xl font-bold text-foreground">Welcome back</h2>
+        <p className="text-muted mt-1 text-sm">
           Sign in to continue your streak
         </p>
       </div>
@@ -90,11 +90,11 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[#9F9A8C] mt-6">
+      <p className="text-center text-sm text-muted mt-6">
         Don&apos;t have an account?{" "}
         <Link
           href="/register"
-          className="text-[#8baf48] hover:underline font-medium"
+          className="text-olive-light hover:underline font-medium"
         >
           Create one
         </Link>

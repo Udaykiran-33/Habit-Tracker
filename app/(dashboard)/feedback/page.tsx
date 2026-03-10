@@ -98,14 +98,14 @@ export default function FeedbackPage() {
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 bg-[#6b8c3a]/20 rounded-xl flex items-center justify-center">
-            <MessageSquarePlus size={20} className="text-[#8baf48]" />
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--olive-mid) 20%, transparent)" }}>
+            <MessageSquarePlus size={20} className="transition-colors" style={{ color: "var(--olive-light)" }} />
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#FAF6F0]">
+          <h1 className="text-xl sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
             Share Your Feedback
           </h1>
         </div>
-        <p className="text-[#9F9A8C] text-sm leading-relaxed mt-2">
+        <p className="text-sm leading-relaxed mt-2 transition-colors" style={{ color: "var(--muted)" }}>
           What feature do you need in the website? What changes should be made to
           make it more impressive? We&apos;d love to hear from you!
         </p>
@@ -115,7 +115,7 @@ export default function FeedbackPage() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Category Selector */}
         <div>
-          <label className="text-sm font-medium text-[#FAF6F0] mb-3 block">
+          <label className="text-sm font-medium mb-3 block transition-colors" style={{ color: "var(--foreground)" }}>
             Category
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -128,10 +128,27 @@ export default function FeedbackPage() {
                   type="button"
                   onClick={() => setCategory(cat.value)}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium border transition-all ${
-                    active
-                      ? "border-[#6b8c3a] bg-[#6b8c3a]/15 text-[#8baf48]"
-                      : "border-[#2D2D2A] bg-[#1A1A1A] text-[#9F9A8C] hover:border-[#3D3D3A]"
+                    active ? "" : "hover:border-[var(--olive-light)]"
                   }`}
+                  style={active ? {
+                    backgroundColor: "color-mix(in srgb, var(--olive-mid) 15%, transparent)",
+                    borderColor: "var(--olive-mid)",
+                    color: "var(--olive-light)"
+                  } : {
+                    backgroundColor: "var(--surface)",
+                    borderColor: "var(--border)",
+                    color: "var(--muted)"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--muted)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!active) {
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
+                    }
+                  }}
                 >
                   <Icon size={14} style={{ color: active ? cat.color : undefined }} />
                   {cat.label}
@@ -143,7 +160,7 @@ export default function FeedbackPage() {
 
         {/* Message Textarea */}
         <div>
-          <label className="text-sm font-medium text-[#FAF6F0] mb-2 block">
+          <label className="text-sm font-medium mb-2 block transition-colors" style={{ color: "var(--foreground)" }}>
             Your Message
           </label>
           <textarea
@@ -151,7 +168,12 @@ export default function FeedbackPage() {
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Describe the feature you'd like, a bug you found, or any suggestions to improve UrHabit…"
             rows={5}
-            className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl px-4 py-3 text-sm text-[#FAF6F0] placeholder:text-[#6B665A] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a] transition-colors resize-none"
+            className="w-full border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--olive-light)] focus:ring-1 focus:ring-[var(--olive-light)] transition-colors resize-none"
+            style={{ 
+              backgroundColor: "var(--surface)", 
+              borderColor: "var(--border)",
+              color: "var(--foreground)"
+            }}
           />
         </div>
 
@@ -167,11 +189,11 @@ export default function FeedbackPage() {
       </form>
 
       {/* Divider */}
-      <div className="border-t border-[#2D2D2A] my-8" />
+      <div className="border-t my-8 transition-colors" style={{ borderColor: "var(--border)" }} />
 
       {/* Past Feedback */}
       <div>
-        <h2 className="font-semibold text-sm sm:text-base text-[#FAF6F0] mb-4">
+        <h2 className="font-semibold text-sm sm:text-base mx-4 ml-0 mb-4 transition-colors" style={{ color: "var(--foreground)" }}>
           Your Past Feedback
         </h2>
         {loading ? (
@@ -179,18 +201,19 @@ export default function FeedbackPage() {
             {[1, 2].map((i) => (
               <div
                 key={i}
-                className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 animate-pulse"
+                className="border rounded-xl p-4 animate-pulse transition-colors"
+                style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
               >
-                <div className="h-3 bg-[#2D2D2A] rounded w-1/4 mb-3" />
-                <div className="h-2 bg-[#2D2D2A] rounded w-3/4 mb-2" />
-                <div className="h-2 bg-[#2D2D2A] rounded w-1/2" />
+                <div className="h-3 rounded w-1/4 mb-3" style={{ backgroundColor: "var(--surface-2)" }} />
+                <div className="h-2 rounded w-3/4 mb-2" style={{ backgroundColor: "var(--surface-2)" }} />
+                <div className="h-2 rounded w-1/2" style={{ backgroundColor: "var(--surface-2)" }} />
               </div>
             ))}
           </div>
         ) : myFeedback.length === 0 ? (
-          <div className="bg-[#1A1A1A] border border-[#2D2D2A] border-dashed rounded-xl p-8 text-center">
-            <MessageSquarePlus size={28} className="text-[#3D3D3A] mx-auto mb-2" />
-            <p className="text-[#9F9A8C] text-sm">
+          <div className="border border-dashed rounded-xl p-8 text-center transition-colors" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
+            <MessageSquarePlus size={28} className="mx-auto mb-2 transition-colors" style={{ color: "var(--muted)" }} />
+            <p className="text-sm transition-colors" style={{ color: "var(--muted)" }}>
               No feedback submitted yet. Be the first to share your thoughts!
             </p>
           </div>
@@ -202,7 +225,10 @@ export default function FeedbackPage() {
               return (
                 <div
                   key={fb._id}
-                  className="bg-[#1A1A1A] border border-[#2D2D2A] rounded-xl p-4 transition-all hover:border-[#3D3D3A]"
+                  className="border rounded-xl p-4 transition-all"
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--muted)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -217,7 +243,7 @@ export default function FeedbackPage() {
                         {catInfo.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-[#6B665A]">
+                    <div className="flex items-center gap-1 text-[10px] transition-colors" style={{ color: "var(--muted)" }}>
                       <Clock size={10} />
                       {new Date(fb.createdAt).toLocaleDateString("en-US", {
                         month: "short",
@@ -226,10 +252,10 @@ export default function FeedbackPage() {
                       })}
                     </div>
                   </div>
-                  <p className="text-sm text-[#C8C3B8] leading-relaxed">
+                  <p className="text-sm leading-relaxed transition-colors" style={{ color: "var(--foreground)" }}>
                     {fb.message}
                   </p>
-                  <div className="flex items-center gap-1.5 mt-2 text-[10px] text-[#6b8c3a]">
+                  <div className="flex items-center gap-1.5 mt-2 text-[10px] transition-colors" style={{ color: "var(--olive-mid)" }}>
                     <CheckCircle2 size={10} />
                     Submitted successfully
                   </div>
@@ -249,11 +275,20 @@ export default function FeedbackPage() {
           />
 
           {/* Modal */}
-          <div className="relative bg-[#1A1A1A] border border-[#2D2D2A] rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-[fadeInUp_0.35s_ease-out]">
+          <div className="relative border rounded-2xl p-6 sm:p-8 max-w-sm w-full shadow-2xl animate-[fadeInUp_0.35s_ease-out] transition-colors" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
             {/* Close */}
             <button
               onClick={() => setShowSuccess(false)}
-              className="absolute top-3 right-3 p-1.5 rounded-lg text-[#6B665A] hover:text-[#9F9A8C] hover:bg-[#222222] transition-colors"
+              className="absolute top-3 right-3 p-1.5 rounded-lg transition-colors"
+              style={{ color: "var(--muted)" }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "var(--foreground)";
+                e.currentTarget.style.backgroundColor = "var(--surface-2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "var(--muted)";
+                e.currentTarget.style.backgroundColor = "transparent";
+              }}
             >
               <X size={16} />
             </button>
@@ -261,39 +296,42 @@ export default function FeedbackPage() {
             {/* Icon */}
             <div className="flex justify-center mb-5">
               <div className="relative">
-                <div className="w-16 h-16 bg-[#6b8c3a]/20 rounded-full flex items-center justify-center">
-                  <CheckCircle2 size={32} className="text-[#8baf48]" />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--olive-mid) 20%, transparent)" }}>
+                  <CheckCircle2 size={32} className="transition-colors" style={{ color: "var(--olive-light)" }} />
                 </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#e2a63d]/20 rounded-full flex items-center justify-center animate-bounce">
-                  <Sparkles size={12} className="text-[#e2a63d]" />
+                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center animate-bounce transition-colors" style={{ backgroundColor: "color-mix(in srgb, #e2a63d 20%, transparent)" }}>
+                  <Sparkles size={12} style={{ color: "#e2a63d" }} />
                 </div>
               </div>
             </div>
 
             {/* Text */}
             <div className="text-center">
-              <h3 className="text-lg font-bold text-[#FAF6F0] mb-2">
+              <h3 className="text-lg font-bold mb-2 transition-colors" style={{ color: "var(--foreground)" }}>
                 Thank You! 🎉
               </h3>
-              <p className="text-sm text-[#9F9A8C] leading-relaxed mb-1">
+              <p className="text-sm leading-relaxed mb-1 transition-colors" style={{ color: "var(--muted)" }}>
                 We truly appreciate your interest in making UrHabit better.
               </p>
-              <p className="text-sm text-[#C8C3B8] leading-relaxed">
+              <p className="text-sm leading-relaxed transition-colors" style={{ color: "var(--foreground)" }}>
                 Your feedback has been received and we will work on implementing
                 changes based on your suggestions.
               </p>
             </div>
 
             {/* Heart accent */}
-            <div className="flex items-center justify-center gap-1.5 mt-4 text-xs text-[#6b8c3a]">
-              <Heart size={12} className="fill-[#6b8c3a]" />
+            <div className="flex items-center justify-center gap-1.5 mt-4 text-xs transition-colors" style={{ color: "var(--olive-mid)" }}>
+              <Heart size={12} className="transition-colors" style={{ fill: "var(--olive-mid)" }} />
               <span>Your voice shapes UrHabit</span>
             </div>
 
             {/* Dismiss button */}
             <button
               onClick={() => setShowSuccess(false)}
-              className="w-full mt-5 bg-[#6b8c3a] hover:bg-[#7a9e43] text-[#FAF6F0] font-medium py-2.5 rounded-xl transition-all text-sm"
+              className="w-full mt-5 font-medium py-2.5 rounded-xl transition-all text-sm"
+              style={{ backgroundColor: "var(--olive-mid)", color: "#FAF6F0" }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--olive-light)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--olive-mid)")}
             >
               Got it!
             </button>

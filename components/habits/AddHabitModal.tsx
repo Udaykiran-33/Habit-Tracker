@@ -3,14 +3,14 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { HABIT_CATEGORIES, HABIT_THEMES, DEFAULT_THEME } from "@/lib/utils";
+import { cn, HABIT_CATEGORIES, OLIVE_COLORS } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface HabitFormData {
   name: string;
   category: string;
   frequency: string;
-  color: string; // stores theme key like "olive", "cream", "midnight"
+  color: string;
 }
 
 interface Habit extends HabitFormData {
@@ -36,7 +36,7 @@ export default function AddHabitModal({
     name: "",
     category: "General",
     frequency: "Daily",
-    color: DEFAULT_THEME,
+    color: "#6b8c3a",
   });
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +49,7 @@ export default function AddHabitModal({
         color: editHabit.color,
       });
     } else {
-      setForm({ name: "", category: "General", frequency: "Daily", color: DEFAULT_THEME });
+      setForm({ name: "", category: "General", frequency: "Daily", color: "#6b8c3a" });
     }
   }, [editHabit, isOpen]);
 
@@ -87,14 +87,14 @@ export default function AddHabitModal({
 
         {/* Category */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#FAF6F0]">Category</label>
+          <label className="text-sm font-medium text-foreground">Category</label>
           <select
             value={form.category}
             onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-            className="w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-lg px-4 py-2.5 text-sm text-[#FAF6F0] focus:outline-none focus:border-[#6b8c3a] focus:ring-1 focus:ring-[#6b8c3a]"
+            className="w-full bg-surface-2 border border-border rounded-lg px-4 py-2.5 text-sm text-foreground focus:outline-none focus:border-olive focus:ring-1 focus:ring-olive"
           >
             {HABIT_CATEGORIES.map((c) => (
-              <option key={c} value={c} className="bg-[#1A1A1A]">
+              <option key={c} value={c} className="bg-surface-2">
                 {c}
               </option>
             ))}
@@ -103,18 +103,19 @@ export default function AddHabitModal({
 
         {/* Frequency */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#FAF6F0]">Frequency</label>
+          <label className="text-sm font-medium text-foreground">Frequency</label>
           <div className="flex flex-wrap gap-2">
             {FREQUENCIES.map((f) => (
               <button
                 key={f}
                 type="button"
                 onClick={() => setForm((s) => ({ ...s, frequency: f }))}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
                   form.frequency === f
-                    ? "bg-[#6b8c3a]/20 border-[#6b8c3a] text-[#8baf48]"
-                    : "bg-[#222222] border-[#2D2D2A] text-[#9F9A8C] hover:border-[#3D3D3A]"
-                }`}
+                    ? "bg-olive/20 border-olive text-olive-light"
+                    : "bg-surface-2 border-border text-muted hover:border-border-hover"
+                )}
               >
                 {f}
               </button>
@@ -122,42 +123,20 @@ export default function AddHabitModal({
           </div>
         </div>
 
-        {/* Theme */}
+        {/* Color */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-[#FAF6F0]">Theme</label>
-          <div className="grid grid-cols-3 gap-2">
-            {Object.entries(HABIT_THEMES).map(([key, theme]) => (
+          <label className="text-sm font-medium text-foreground">Color</label>
+          <div className="flex gap-2">
+            {OLIVE_COLORS.map((c) => (
               <button
-                key={key}
+                key={c}
                 type="button"
-                onClick={() => setForm((f) => ({ ...f, color: key }))}
-                className={`relative rounded-xl border-2 p-3 transition-all ${
-                  form.color === key
-                    ? "border-[#FAF6F0] scale-[1.02]"
-                    : "border-[#2D2D2A] hover:border-[#3D3D3A]"
+                onClick={() => setForm((f) => ({ ...f, color: c }))}
+                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                  form.color === c ? "border-foreground scale-110" : "border-transparent"
                 }`}
-                style={{ backgroundColor: theme.bgDone }}
-              >
-                {/* Color swatch bar */}
-                <div className="flex gap-1 mb-2 justify-center">
-                  {theme.preview.map((c, i) => (
-                    <div
-                      key={i}
-                      className="w-4 h-4 rounded-full border border-black/20"
-                      style={{ backgroundColor: c }}
-                    />
-                  ))}
-                </div>
-                <p className="text-[10px] font-semibold text-center" style={{ color: theme.accent }}>
-                  {theme.name}
-                </p>
-                {/* Selected check */}
-                {form.color === key && (
-                  <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[#FAF6F0] flex items-center justify-center">
-                    <span className="text-[8px] text-[#111]">✓</span>
-                  </div>
-                )}
-              </button>
+                style={{ backgroundColor: c }}
+              />
             ))}
           </div>
         </div>

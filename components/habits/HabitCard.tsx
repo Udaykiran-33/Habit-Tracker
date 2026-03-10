@@ -8,7 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { cn, HABIT_THEMES } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import toast from "react-hot-toast";
 
@@ -17,7 +17,7 @@ interface Habit {
   name: string;
   category: string;
   frequency: string;
-  color: string; // theme key like "olive", "cream", "midnight"
+  color: string;
   completions: { date: string }[];
   streak: number;
 }
@@ -40,9 +40,6 @@ export default function HabitCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Resolve theme — fallback to olive for old hex-color values
-  const theme = HABIT_THEMES[habit.color] ?? HABIT_THEMES.olive;
-
   const handleToggle = async () => {
     setLoading(true);
     try {
@@ -55,28 +52,26 @@ export default function HabitCard({
   return (
     <div
       className={cn(
-        "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all"
+        "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all",
+        completedToday
+          ? "bg-olive-bg border-olive/50"
+          : "bg-surface border-border hover:border-border-hover"
       )}
-      style={{
-        backgroundColor: completedToday ? theme.bgDone : theme.bg,
-        borderColor: completedToday ? `${theme.borderDone}80` : theme.border,
-      }}
     >
-      {/* Theme stripe */}
+      {/* Color dot */}
       <div
         className="w-1 h-8 sm:h-10 rounded-full flex-shrink-0"
-        style={{ backgroundColor: theme.stripe }}
+        style={{ backgroundColor: habit.color }}
       />
 
       {/* Toggle */}
       <button
         onClick={handleToggle}
         disabled={loading}
-        className="flex-shrink-0 transition-colors disabled:opacity-50"
-        style={{ color: completedToday ? theme.accent : "#9F9A8C" }}
+        className="flex-shrink-0 text-muted hover:text-olive-light transition-colors disabled:opacity-50"
       >
         {completedToday ? (
-          <CheckCircle2 size={20} className="sm:w-[22px] sm:h-[22px]" />
+          <CheckCircle2 size={20} className="text-olive sm:w-[22px] sm:h-[22px]" />
         ) : (
           <Circle size={20} className="sm:w-[22px] sm:h-[22px]" />
         )}
@@ -86,15 +81,15 @@ export default function HabitCard({
       <div className="flex-1 min-w-0">
         <p
           className={cn(
-            "font-medium text-[13px] sm:text-sm truncate"
+            "font-medium text-[13px] sm:text-sm truncate",
+            completedToday ? "text-olive-light" : "text-foreground"
           )}
-          style={{ color: completedToday ? theme.textDone : theme.text }}
         >
           {habit.name}
         </p>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
           <Badge label={habit.category} variant="gray" />
-          <span className="text-[10px] sm:text-xs text-[#6B665A]">{habit.frequency}</span>
+          <span className="text-[10px] sm:text-xs text-dim">{habit.frequency}</span>
         </div>
       </div>
 
@@ -110,7 +105,7 @@ export default function HabitCard({
       <div className="relative flex-shrink-0">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="text-[#9F9A8C] hover:text-[#FAF6F0] transition-all p-1 sm:p-1.5 rounded-lg hover:bg-[#222222] lg:opacity-0 lg:group-hover:opacity-100"
+          className="text-muted hover:text-foreground transition-all p-1 sm:p-1.5 rounded-lg hover:bg-surface-2 lg:opacity-0 lg:group-hover:opacity-100"
         >
           <MoreVertical size={14} className="sm:w-[15px] sm:h-[15px]" />
         </button>
@@ -120,12 +115,12 @@ export default function HabitCard({
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute right-0 top-7 z-20 bg-[#222222] border border-[#2D2D2A] rounded-lg shadow-xl py-1 w-36">
+            <div className="absolute right-0 top-7 z-20 bg-surface-2 border border-border rounded-lg shadow-xl py-1 w-36">
               <button
                 onClick={() => { onEdit(habit); setMenuOpen(false); }}
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-[#FAF6F0] hover:bg-[#2D2D2A] transition-colors"
+                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-border transition-colors"
               >
-                <Pencil size={13} className="text-[#9F9A8C]" /> Edit
+                <Pencil size={13} className="text-muted" /> Edit
               </button>
               <button
                 onClick={() => { onDelete(habit.id); setMenuOpen(false); }}

@@ -34,11 +34,12 @@ export default function Modal({
     <div
       ref={overlayRef}
       onClick={(e) => e.target === overlayRef.current && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm p-4"
+      style={{ backgroundColor: "var(--overlay)" }}
     >
       <div
         className={cn(
-          "relative w-full bg-[#1A1A1A] border border-[#2D2D2A] rounded-2xl shadow-2xl",
+          "relative w-full bg-surface border border-border rounded-2xl shadow-2xl",
           {
             "max-w-sm": size === "sm",
             "max-w-lg": size === "md",
@@ -47,11 +48,11 @@ export default function Modal({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2D2D2A]">
-          <h2 className="text-base font-semibold text-[#FAF6F0]">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
           <button
             onClick={onClose}
-            className="text-[#9F9A8C] hover:text-[#FAF6F0] transition-colors"
+            className="text-muted hover:text-foreground transition-colors"
           >
             <X size={18} />
           </button>

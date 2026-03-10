@@ -103,55 +103,11 @@ export const HABIT_ICONS = [
   "star",
 ];
 
-export const HABIT_THEMES: Record<string, {
-  name: string;
-  bg: string;
-  bgDone: string;
-  border: string;
-  borderDone: string;
-  accent: string;
-  stripe: string;
-  text: string;
-  textDone: string;
-  preview: [string, string, string]; // 3 colors for preview swatch
-}> = {
-  olive: {
-    name: "Olive Green",
-    bg: "#1A1A1A",
-    bgDone: "#1C2412",
-    border: "#2D2D2A",
-    borderDone: "#6b8c3a",
-    accent: "#6b8c3a",
-    stripe: "#6b8c3a",
-    text: "#FAF6F0",
-    textDone: "#8baf48",
-    preview: ["#1C2412", "#6b8c3a", "#8baf48"],
-  },
-  cream: {
-    name: "Warm Cream",
-    bg: "#1A1A1A",
-    bgDone: "#1F1B15",
-    border: "#2D2D2A",
-    borderDone: "#B8A88A",
-    accent: "#D4C5A9",
-    stripe: "#D4C5A9",
-    text: "#FAF6F0",
-    textDone: "#D4C5A9",
-    preview: ["#1F1B15", "#D4C5A9", "#FAF6F0"],
-  },
-  midnight: {
-    name: "Dark Onyx",
-    bg: "#1A1A1A",
-    bgDone: "#111318",
-    border: "#2D2D2A",
-    borderDone: "#4A5568",
-    accent: "#718096",
-    stripe: "#4A5568",
-    text: "#FAF6F0",
-    textDone: "#A0AEC0",
-    preview: ["#111318", "#4A5568", "#A0AEC0"],
-  },
-};
-
-export const DEFAULT_THEME = "olive";
-
+export const OLIVE_COLORS = [
+  "#4A5C2F",
+  "#6B8C3A",
+  "#8BAF48",
+  "#3D4F27",
+  "#5A7832",
+  "#7A9E43",
+];
