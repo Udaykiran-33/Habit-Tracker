@@ -274,9 +274,9 @@ export default function DashboardPage() {
                       color: chartColors.tooltipText,
                       fontSize: "11px",
                     }}
-                    cursor={{ fill: chartColors.cursorFill }}
+                    cursor={false}
                   />
-                  <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
+                  <Bar dataKey="completed" radius={[4, 4, 0, 0]} activeBar={false}>
                     {stats.weekly.map((entry, i) => (
                       <Cell
                         key={i}

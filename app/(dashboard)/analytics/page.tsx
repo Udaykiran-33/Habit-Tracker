@@ -34,6 +34,7 @@ interface Stats {
   successRate: number;
   xp: number;
   level: number;
+  joinedAt?: string;
 }
 
 export default function AnalyticsPage() {
@@ -76,23 +77,40 @@ export default function AnalyticsPage() {
     habits.flatMap((h) => h.completions.map((c) => c.date))
   );
 
-  // Last 30 days data
-  const last30 = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (29 - i));
-    const dateStr = d.toISOString().split("T")[0];
-    const completed = habits.filter((h) =>
-      h.completions.some((c) => c.date === dateStr)
-    ).length;
-    const rate = habits.length > 0 ? Math.round((completed / habits.length) * 100) : 0;
-    return {
-      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      fullDate: dateStr,
-      completed,
-      total: habits.length,
-      rate,
-    };
-  });
+  // Historical data (from join date to today)
+  const historicalData = (() => {
+    if (!stats?.joinedAt) return [];
+    
+    const joinDate = new Date(stats.joinedAt);
+    joinDate.setHours(0, 0, 0, 0); // start of join day 
+    
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // start of today
+    
+    // Calculate total days between join and today
+    const diffTime = Math.abs(now.getTime() - joinDate.getTime());
+    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+
+    // Always show at least 7 days for a better-looking chart 
+    if (diffDays < 7) {
+      diffDays = 7;
+    }
+
+    return Array.from({ length: diffDays }, (_, i) => {
+      const d = new Date();
+      d.setDate(now.getDate() - (diffDays - 1 - i));
+      const dateStr = d.toISOString().split("T")[0];
+      const completed = habits.filter((h) =>
+        h.completions.some((c) => c.date === dateStr)
+      ).length;
+      
+      return {
+        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        fullDate: dateStr,
+        completed,
+      };
+    });
+  })();
 
 
 
@@ -343,20 +361,21 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Charts Row */}
-      <div className="mb-4 sm:mb-6">
-        {/* 30-day trend */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">30-Day Completion Trend</h3>
-          <p className="text-[10px] text-dim mb-4">Habits completed per day</p>
+      <div className="mb-4 sm:mb-6 w-full">
+        {/* Historical trend */}
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 w-full">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">Historical Completion Trend</h3>
+          <p className="text-[10px] text-dim mb-4">Habits completed per day since joining</p>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={last30}>
+            <LineChart data={historicalData}>
               <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
               <XAxis
                 dataKey="date"
                 tick={{ fill: c.tick, fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                interval={6}
+                interval="preserveStartEnd"
+                minTickGap={30}
               />
               <YAxis
                 tick={{ fill: c.tick, fontSize: 11 }}
@@ -374,7 +393,7 @@ export default function AnalyticsPage() {
                 dataKey="completed"
                 stroke={c.olive}
                 strokeWidth={2}
-                dot={false}
+                dot={historicalData.length <= 14 ? { r: 3, fill: c.olive } : false}
                 activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
               />
             </LineChart>

@@ -53,6 +53,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
       <Toaster
         position="top-right"
         toastOptions={{
+          duration: 2000,
           style: {
             background: isDark ? "#141414" : "#FFFFFF",
             color: isDark ? "#f5f5f5" : "#1a1a1a",

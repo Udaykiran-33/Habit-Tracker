@@ -15,7 +15,7 @@ export async function GET() {
   const today = getTodayString();
 
   const user = await User.findById(session.user.id)
-    .select("xp level")
+    .select("xp level createdAt")
     .lean();
 
   const habits = await Habit.find({
@@ -73,6 +73,7 @@ export async function GET() {
     successRate,
     xp: user?.xp ?? 0,
     level: user?.level ?? 1,
+    joinedAt: user?.createdAt,
     weekly,
     streaks: habits.map((h, i) => ({
       habitId: h._id.toString(),
