@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, RefreshCw } from "lucide-react";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
 import Button from "@/components/ui/Button";
@@ -23,17 +23,24 @@ export default function HabitsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const today = getTodayString();
 
   const fetchHabits = async () => {
-    const res = await fetch("/api/habits");
-    const { habits: raw } = await res.json();
-    const enriched = raw.map((h: Habit) => ({
-      ...h,
-      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
-    }));
-    setHabits(enriched);
+    try {
+      const res = await fetch("/api/habits");
+      const { habits: raw } = await res.json();
+      const enriched = raw.map((h: Habit) => ({
+        ...h,
+        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+      }));
+      setHabits(enriched);
+    } catch (error) {
+      console.error("Failed to load habits:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchHabits(); }, []);
@@ -157,7 +164,12 @@ export default function HabitsPage() {
       </div>
 
       {/* Habits List */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 min-h-[200px]">
+          <RefreshCw size={32} className="text-olive animate-spin mb-4" />
+          <p className="text-muted text-sm">Loading your habits...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-muted">
           <p className="text-4xl mb-3">🎯</p>
           <p className="text-sm">

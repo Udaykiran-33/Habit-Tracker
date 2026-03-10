@@ -8,6 +8,7 @@ import {
   Target,
   TrendingUp,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import HabitCard from "@/components/habits/HabitCard";
@@ -52,26 +53,33 @@ export default function DashboardPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [stats, setStats] = useState<DashStats | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const today = getTodayString();
 
   const isDark = theme === "dark";
 
   const fetchData = async () => {
-    const [hRes, sRes] = await Promise.all([
-      fetch("/api/habits"),
-      fetch("/api/stats"),
-    ]);
-    const { habits: rawHabits } = await hRes.json();
-    const statsData = await sRes.json();
+    try {
+      const [hRes, sRes] = await Promise.all([
+        fetch("/api/habits"),
+        fetch("/api/stats"),
+      ]);
+      const { habits: rawHabits } = await hRes.json();
+      const statsData = await sRes.json();
 
-    const enriched = rawHabits.map((h: Habit) => ({
-      ...h,
-      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
-    }));
+      const enriched = rawHabits.map((h: Habit) => ({
+        ...h,
+        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+      }));
 
-    setHabits(enriched);
-    setStats(statsData);
+      setHabits(enriched);
+      setStats(statsData);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
@@ -211,7 +219,12 @@ export default function DashboardPage() {
               {completedHabits.length}/{habits.length} done
             </span>
           </div>
-          {habits.length === 0 ? (
+          {loading ? (
+            <div className="bg-surface border border-border border-dashed rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center min-h-[200px]">
+              <RefreshCw size={24} className="text-olive animate-spin mb-3" />
+              <p className="text-muted text-sm">Loading your habits...</p>
+            </div>
+          ) : habits.length === 0 ? (
             <div className="bg-surface border border-border border-dashed rounded-xl p-8 sm:p-10 text-center">
               <Target size={28} className="text-disabled mx-auto mb-2" />
               <p className="text-muted text-sm">No habits yet</p>
