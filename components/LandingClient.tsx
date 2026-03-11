@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { CalendarDays, Flame, LineChart, Medal } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -299,17 +300,17 @@ export default function LandingClient() {
           </div>
           <div ref={featuresRef} className="f-grid">
             {[
-              { n: "01", i: "🗓️", t: "Daily Tracking",     d: "Mark habits done and build unbreakable momentum every single day." },
-              { n: "02", i: "🔥", t: "Streak Monitoring",  d: "Fire streaks that hold you accountable and keep you coming back." },
-              { n: "03", i: "📈", t: "Progress Analytics", d: "Charts and GitHub-style heatmaps to visualise your real growth." },
-              { n: "04", i: "🏅", t: "Gamification",       d: "Earn XP, level up through ranks, and unlock achievement badges." },
+              { n: "01", icon: <CalendarDays strokeWidth={1.5} />, t: "Daily Tracking",     d: "Mark habits done and build unbreakable momentum every single day." },
+              { n: "02", icon: <Flame strokeWidth={1.5} />, t: "Streak Monitoring",  d: "Fire streaks that hold you accountable and keep you coming back." },
+              { n: "03", icon: <LineChart strokeWidth={1.5} />, t: "Progress Analytics", d: "Charts and GitHub-style heatmaps to visualise your real growth." },
+              { n: "04", icon: <Medal strokeWidth={1.5} />, t: "Gamification",       d: "Earn XP, level up through ranks, and unlock achievement badges." },
             ].map(f => (
               <div key={f.t} className="fc"
                 onMouseEnter={e => gsap.to(e.currentTarget, { y: -6, boxShadow: `0 18px 44px rgba(85,107,47,0.13)`, borderColor: C.oliveBright, duration: 0.28, ease: "power2.out" })}
                 onMouseLeave={e => gsap.to(e.currentTarget, { y: 0, boxShadow: "none", borderColor: C.creamBorder, duration: 0.32, ease: "power2.out" })}
               >
                 <span className="fc-n">{f.n}</span>
-                <div className="fc-i">{f.i}</div>
+                <div className="fc-i text-olive">{f.icon}</div>
                 <div className="fc-t">{f.t}</div>
                 <div className="fc-d">{f.d}</div>
                 <div className="fc-ln" />
