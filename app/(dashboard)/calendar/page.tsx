@@ -143,7 +143,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Monthly Calendar Widget */}
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6" style={{ backgroundColor: calBg }}>
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6 max-w-3xl mx-auto" style={{ backgroundColor: calBg }}>
         {/* Navigation & Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">

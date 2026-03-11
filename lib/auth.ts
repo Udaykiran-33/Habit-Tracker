@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   trustHost: true,
   providers: [
     Credentials({
@@ -78,4 +78,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     error: "/login",
   },
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  logger: {
+    error(error: any) {
+      if (error?.name === "JWTSessionError" || error?.message?.includes("JWTSessionError")) {
+        return;
+      }
+      console.error(error);
+    },
+  },
 });
+
+export const { handlers, signIn, signOut } = nextAuth;
+export const auth: typeof nextAuth.auth = async (...args: any[]) => {
+  try {
+    // @ts-ignore
+    return await nextAuth.auth(...args);
+  } catch (error: any) {
+    // Rethrow Next.js navigation errors (like redirects) so they work normally
+    if (error?.message === "NEXT_REDIRECT" || error?.digest?.startsWith("NEXT_REDIRECT")) {
+      throw error;
+    }
+    // Return null for session parsing errors to maintain a smooth flow without crashing
+    return null as any;
+  }
+};

@@ -256,7 +256,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Monthly Calendar Widget */}
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6" style={{ backgroundColor: c.calBg }}>
+      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6 mx-auto max-w-3xl" style={{ backgroundColor: c.calBg }}>
         {/* Navigation & Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
