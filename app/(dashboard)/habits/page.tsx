@@ -59,12 +59,36 @@ export default function HabitsPage() {
   }, [habits, search, category]);
 
   const handleToggle = async (habitId: string) => {
+    // Optimistic UI update
+    setHabits(currentHabits => currentHabits.map(habit => {
+      if (habit.id === habitId) {
+        const isCompleted = habit.completions.some(c => c.date === today);
+        let newCompletions = isCompleted
+          ? habit.completions.filter(c => c.date !== today)
+          : [...habit.completions, { date: today }];
+        return {
+          ...habit,
+          completions: newCompletions,
+          streak: calculateStreak(newCompletions.map(c => c.date)),
+        };
+      }
+      return habit;
+    }));
+
+    // Perform API request without await-blocking UI
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
-    if (res.ok) await fetchHabits();
+    
+    if (res.ok) {
+      // Sync with server silently
+      fetchHabits();
+    } else {
+      toast.error("Failed to update habit");
+      fetchHabits(); // Revert on error
+    }
   };
 
   const handleSaveHabit = async (data: Partial<Habit & { id?: string }>) => {

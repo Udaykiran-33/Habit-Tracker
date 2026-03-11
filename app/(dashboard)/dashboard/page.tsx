@@ -85,15 +85,37 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = async (habitId: string) => {
+    // Optimistic UI update
+    setHabits(currentHabits => currentHabits.map(habit => {
+      if (habit.id === habitId) {
+        const isCompleted = habit.completions.some(c => c.date === today);
+        let newCompletions = isCompleted
+          ? habit.completions.filter(c => c.date !== today)
+          : [...habit.completions, { date: today }];
+        return {
+          ...habit,
+          completions: newCompletions,
+          streak: calculateStreak(newCompletions.map(c => c.date)),
+        };
+      }
+      return habit;
+    }));
+
+    // Perform API request without await-blocking UI
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
+    
     if (res.ok) {
-      await fetchData();
       const { completed } = await res.clone().json().catch(() => ({}));
       toast.success(completed ? "Habit completed! +10 XP" : "Unmarked");
+      // Sync with server to update XP/stats globally
+      fetchData();
+    } else {
+      toast.error("Failed to update habit");
+      fetchData(); // Revert on error
     }
   };
 
