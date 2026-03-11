@@ -88,8 +88,8 @@ const nextAuth = NextAuth({
   },
 });
 
-export const { handlers, signIn, signOut } = nextAuth;
-export const auth: typeof nextAuth.auth = async (...args: any[]) => {
+export const { handlers, signIn, signOut} = nextAuth;
+export const auth = async (...args: any[]) => {
   try {
     // @ts-ignore
     return await nextAuth.auth(...args);
