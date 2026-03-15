@@ -86,9 +86,20 @@ export default function DashboardPage() {
       body: JSON.stringify({ habitId }),
     });
     if (res.ok) {
+      const data = await res.json().catch(() => ({}));
       await fetchData();
-      const { completed } = await res.clone().json().catch(() => ({}));
-      toast.success(completed ? "Habit completed! +10 XP" : "Unmarked");
+      if (data.completed) {
+        if (data.rewards && data.rewards.length > 0) {
+          // Show a special coin reward toast for each milestone
+          data.rewards.forEach((reward: string) => {
+            toast.success(`🎉 Achievement! ${reward}`, { duration: 4000 });
+          });
+        } else {
+          toast.success("Habit completed! +10 XP");
+        }
+      } else {
+        toast("Unmarked", { icon: "↩️" });
+      }
     }
   };
 
