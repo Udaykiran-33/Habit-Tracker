@@ -56,12 +56,14 @@ export default function DashboardPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const today = getTodayString();
 
   const isDark = theme === "dark";
 
   const fetchData = async () => {
-    const [hRes, sRes] = await Promise.all([
+    try {
+      const [hRes, sRes] = await Promise.all([
       fetch("/api/habits"),
       fetch("/api/stats"),
     ]);
@@ -75,11 +77,31 @@ export default function DashboardPage() {
 
     setHabits(enriched);
     setStats(statsData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = async (habitId: string) => {
+    const today2 = getTodayString();
+    // Optimistic update — flip the completion state instantly
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === habitId
+          ? {
+              ...h,
+              completions: h.completions.some((c) => c.date === today2)
+                ? h.completions.filter((c) => c.date !== today2)
+                : [...h.completions, { date: today2 }],
+            }
+          : h
+      )
+    );
+
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -87,19 +109,23 @@ export default function DashboardPage() {
     });
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
-      await fetchData();
+      // Silent background sync to get accurate stats/streak
+      fetchData();
       if (data.completed) {
         if (data.rewards && data.rewards.length > 0) {
-          // Show a special coin reward toast for each milestone
           data.rewards.forEach((reward: string) => {
-            toast.success(`🎉 Achievement! ${reward}`, { duration: 4000 });
+            toast.success(`🎉 ${reward}`, { duration: 3000 });
           });
         } else {
-          toast.success("Habit completed! +10 XP");
+          toast.success("✓ +10 XP", { duration: 1000 });
         }
       } else {
-        toast("Unmarked", { icon: "↩️" });
+        toast("Unmarked", { icon: "↩️", duration: 1000 });
       }
+    } else {
+      // Revert optimistic update on failure
+      fetchData();
+      toast.error("Failed to update", { duration: 1000 });
     }
   };
 
@@ -113,10 +139,10 @@ export default function DashboardPage() {
     });
     if (res.ok) {
       await fetchData();
-      toast.success(data.id ? "Habit updated!" : "Habit created!");
+      toast.success(data.id ? "Habit updated!" : "Habit created!", { duration: 1000 });
     } else {
       const errData = await res.json().catch(() => ({}));
-      toast.error(errData.error || "Failed to save habit");
+      toast.error(errData.error || "Failed to save habit", { duration: 1000 });
     }
   };
 
@@ -129,7 +155,7 @@ export default function DashboardPage() {
     const res = await fetch(`/api/habits/${deleteId}`, { method: "DELETE" });
     if (res.ok) {
       await fetchData();
-      toast.success("Habit removed");
+      toast.success("Habit removed", { duration: 1000 });
     }
     setDeleteId(null);
   };
@@ -154,8 +180,47 @@ export default function DashboardPage() {
     olive: isDark ? "#6b8c3a" : "#5A7832",
   };
 
+  if (loading) {
+    return (
+      <div className="p-3 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between gap-3 animate-pulse">
+          <div className="w-48 h-8 bg-surface border border-border rounded-lg" />
+          <div className="flex gap-3">
+            <div className="w-24 h-9 bg-surface border border-border rounded-full" />
+            <div className="w-24 h-9 bg-olive/20 rounded-lg border border-border" />
+          </div>
+        </div>
+        
+        {/* XP Bar Skeleton */}
+        <div className="h-16 bg-surface border border-border rounded-xl animate-pulse" />
+        
+        {/* Stats Grid Skeleton */}
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+          <div className="h-24 bg-surface border border-border rounded-xl animate-pulse" />
+          <div className="h-24 bg-surface border border-border rounded-xl animate-pulse" />
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 space-y-3">
+            <div className="w-32 h-6 bg-surface border border-border rounded-lg animate-pulse mb-4" />
+            <div className="h-24 bg-surface border border-border rounded-xl animate-pulse" />
+            <div className="h-24 bg-surface border border-border rounded-xl animate-pulse" />
+            <div className="h-24 bg-surface border border-border rounded-xl animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <div className="w-32 h-6 bg-surface border border-border rounded-lg animate-pulse mb-3" />
+            <div className="h-48 bg-surface border border-border rounded-xl animate-pulse" />
+            <div className="h-32 bg-surface border border-border rounded-xl animate-pulse" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-3 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-3 sm:p-6 lg:p-8 max-w-6xl mx-auto anime-enter">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         <div className="min-w-0">

@@ -42,6 +42,7 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "Registration failed");
+        setLoading(false);
         return;
       }
 
@@ -49,19 +50,18 @@ export default function RegisterPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         redirect: false,
+        callbackUrl: `${window.location.origin}/dashboard`,
       });
 
       if (result?.ok) {
         toast.success("Account created! Welcome to UrHabit 🔥");
-        router.refresh();
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       } else {
         toast.success("Account created! Please sign in.");
         router.push("/login");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };

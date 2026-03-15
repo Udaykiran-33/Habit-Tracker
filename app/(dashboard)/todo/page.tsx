@@ -18,12 +18,15 @@ export default function TodoPage() {
   const [time, setTime] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [initialLoading, setInitialLoading] = useState(true);
+
   const fetchTodos = async () => {
     const res = await fetch("/api/todos");
     if (res.ok) {
       const data = await res.json();
       setTodos(data.todos);
     }
+    setInitialLoading(false);
   };
 
   useEffect(() => {
@@ -73,8 +76,38 @@ export default function TodoPage() {
     }
   };
 
+  if (initialLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-8">
+        {/* Header Skeleton */}
+        <div className="mb-8 animate-pulse">
+          <div className="w-48 h-8 bg-surface border border-border rounded-lg mb-2" />
+          <div className="w-64 h-4 bg-surface border border-border rounded-lg" />
+        </div>
+
+        {/* Input Form Skeleton */}
+        <div className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-8 animate-pulse">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="h-10 bg-surface border border-border rounded-lg" />
+            <div className="flex gap-2">
+              <div className="flex-1 h-10 bg-surface border border-border rounded-lg" />
+              <div className="w-24 h-10 bg-olive/20 border border-border rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+        {/* List Skeleton */}
+        <div className="space-y-3 animate-pulse">
+          <div className="h-20 bg-surface border border-border rounded-xl" />
+          <div className="h-20 bg-surface border border-border rounded-xl" />
+          <div className="h-20 bg-surface border border-border rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto anime-enter">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Todo List</h1>
         <p className="text-muted text-sm mt-1">Manage your daily tasks and remain productive.</p>

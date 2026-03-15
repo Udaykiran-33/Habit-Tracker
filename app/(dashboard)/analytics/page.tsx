@@ -235,17 +235,53 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw size={20} className="text-olive animate-spin" />
-          <span className="text-muted text-sm">Loading analytics…</span>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 sm:space-y-8">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between animate-pulse">
+          <div>
+            <div className="w-32 sm:w-48 h-8 bg-surface border border-border rounded-lg mb-2" />
+            <div className="w-48 sm:w-64 h-4 bg-surface border border-border rounded-lg" />
+          </div>
+          <div className="w-10 h-10 bg-surface border border-border rounded-lg" />
+        </div>
+
+        {/* Quick Stats Skeleton */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-pulse">
+          <div className="h-24 sm:h-28 bg-surface border border-border rounded-xl" />
+          <div className="h-24 sm:h-28 bg-surface border border-border rounded-xl" />
+          <div className="h-24 sm:h-28 bg-surface border border-border rounded-xl" />
+          <div className="h-24 sm:h-28 bg-surface border border-border rounded-xl" />
+        </div>
+
+        {/* Calendar Skeleton */}
+        <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 max-w-lg mx-auto w-full animate-pulse">
+          <div className="flex justify-between mb-4">
+            <div className="w-24 h-5 bg-border rounded" />
+            <div className="w-16 h-4 bg-border rounded" />
+          </div>
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} className="h-4 bg-border rounded w-full" />
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="aspect-square bg-border rounded-md" />
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 animate-pulse">
+          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 h-[300px]" />
+          <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 h-[300px]" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto anime-enter">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>

@@ -25,18 +25,19 @@ export default function LoginPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         redirect: false,
+        callbackUrl: `${window.location.origin}/dashboard`,
       });
 
       if (result?.error) {
         toast.error("Invalid email or password");
+        setLoading(false);
       } else if (result?.ok) {
         toast.success("Welcome back!");
-        router.refresh();
-        router.push("/dashboard");
+        // The fastest way to hard-refresh state and bounce to dashboard
+        window.location.href = "/dashboard";
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
-    } finally {
       setLoading(false);
     }
   };

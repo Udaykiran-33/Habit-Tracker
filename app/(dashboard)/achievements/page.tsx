@@ -225,8 +225,29 @@ export default function AchievementsPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center min-h-[60vh]">
-        <div className="text-muted text-sm">Loading achievements…</div>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6 sm:space-y-8 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <div className="w-48 h-8 bg-surface border border-border rounded-lg mb-2" />
+            <div className="w-32 h-4 bg-surface border border-border rounded-lg" />
+          </div>
+          <div className="w-24 h-10 bg-surface border border-border rounded-xl" />
+        </div>
+
+        {/* Level Card Skeleton */}
+        <div className="h-32 bg-surface-2 border border-border rounded-xl" />
+
+        {/* Coin Rewards Grid Skeleton */}
+        <div>
+          <div className="w-32 h-5 bg-surface border border-border rounded mb-1" />
+          <div className="w-64 h-3 bg-surface border border-border rounded mb-4" />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-32 bg-surface border border-border rounded-xl" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -235,7 +256,7 @@ export default function AchievementsPage() {
   const otherAchievements = achievements.filter((a) => !a.reward);
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto anime-enter">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 sm:mb-8">
         <div>
