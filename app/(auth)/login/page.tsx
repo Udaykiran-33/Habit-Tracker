@@ -45,7 +45,7 @@ export default function LoginPage() {
     <div>
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
-        <div className="w-9 h-9 flex items-center justify-center">
+        <div className="w-9 h-9 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
           <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
         </div>
         <span className="text-foreground font-bold text-xl">

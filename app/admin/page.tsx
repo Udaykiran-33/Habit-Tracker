@@ -246,8 +246,8 @@ export default function AdminPage() {
         <div className="relative w-full max-w-sm">
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center shadow-lg transition-colors" style={{ backgroundColor: "var(--olive-mid)", boxShadow: "0 10px 15px -3px var(--olive-bg)" }}>
-              <Flame size={22} className="text-[#FAF6F0]" />
+            <div className="w-11 h-11 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
+              <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-2xl tracking-tight transition-colors" style={{ color: "var(--foreground)" }}>
               Ur<span className="transition-colors" style={{ color: "var(--olive-light)" }}>Habit</span>
@@ -361,8 +361,8 @@ export default function AdminPage() {
       <header className="sticky top-0 z-30 backdrop-blur-lg border-b transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--surface) 90%, transparent)", borderColor: "var(--border)" }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14 sm:h-16">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: "var(--olive-mid)" }}>
-              <Flame size={16} className="text-[#FAF6F0]" />
+            <div className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
+              <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
             </div>
             <span className="font-bold text-lg tracking-tight transition-colors" style={{ color: "var(--foreground)" }}>
               Ur<span className="transition-colors" style={{ color: "var(--olive-light)" }}>Habit</span>

@@ -53,7 +53,7 @@ export default function Sidebar() {
       {/* Mobile top bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-sidebar-bg border-b border-sidebar-border flex items-center justify-between px-4 py-3">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 flex items-center justify-center">
+          <div className="w-8 h-8 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
             <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
           </div>
           <span className="text-foreground font-bold text-base tracking-tight">
@@ -97,7 +97,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="px-5 py-6 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 flex items-center justify-center">
+            <div className="w-9 h-9 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
               <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-foreground font-bold text-lg tracking-tight">

@@ -19,7 +19,7 @@ export default function AuthLayout({
         <div className="relative z-10 flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
               <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
             </div>
             <span className="text-foreground font-bold text-2xl tracking-tight">

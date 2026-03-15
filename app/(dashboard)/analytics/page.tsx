@@ -34,6 +34,7 @@ interface Stats {
   successRate: number;
   xp: number;
   level: number;
+  joinedAt: string | null;
 }
 
 export default function AnalyticsPage() {
@@ -75,24 +76,27 @@ export default function AnalyticsPage() {
     habits.flatMap((h) => h.completions.map((c) => c.date))
   );
 
-  // Last 30 days data
-  const last30 = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (29 - i));
+  // Daily data from join date to today
+  const joinDate = stats?.joinedAt ? new Date(stats.joinedAt) : (() => { const d = new Date(); d.setDate(d.getDate() - 29); return d; })();
+  const joinDateStr = joinDate.toISOString().split("T")[0];
+  const todayDateObj = new Date();
+  const dayCount = Math.max(1, Math.ceil((todayDateObj.getTime() - joinDate.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
+  const dailySince = Array.from({ length: dayCount }, (_, i) => {
+    const d = new Date(joinDate);
+    d.setDate(d.getDate() + i);
     const dateStr = d.toISOString().split("T")[0];
+    if (dateStr > today) return null;
     const completed = habits.filter((h) =>
       h.completions.some((c) => c.date === dateStr)
     ).length;
-    const rate = habits.length > 0 ? Math.round((completed / habits.length) * 100) : 0;
     return {
       date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       fullDate: dateStr,
       completed,
       total: habits.length,
-      rate,
     };
-  });
-
+  }).filter(Boolean) as { date: string; fullDate: string; completed: number; total: number }[];
   // Last 12 weeks
   const last12Weeks = Array.from({ length: 12 }, (_, i) => {
     const weekEnd = new Date();
@@ -159,6 +163,33 @@ export default function AnalyticsPage() {
     const active = habits.some((h) => h.completions.some((c) => c.date === dateStr));
     heatmapData.push({ date: dateStr, active });
   }
+
+  // Monthly calendar
+  const calendarNow = new Date();
+  const calYear = calendarNow.getFullYear();
+  const calMonth = calendarNow.getMonth();
+  const calMonthName = calendarNow.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const firstDayOfMonth = new Date(calYear, calMonth, 1).getDay();
+
+  const calendarDays = Array.from({ length: daysInMonth }, (_, i) => {
+    const day = i + 1;
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    const completedCount = habits.filter((h) =>
+      h.completions.some((c) => c.date === dateStr)
+    ).length;
+    const totalHabits = habits.length;
+    const isToday = dateStr === today;
+    const isPast = dateStr <= today;
+    let status: "none" | "partial" | "all" = "none";
+    if (isPast && totalHabits > 0) {
+      if (completedCount === totalHabits) status = "all";
+      else if (completedCount > 0) status = "partial";
+    }
+    return { day, dateStr, status, completedCount, totalHabits, isToday };
+  });
+
+  const perfectDays = calendarDays.filter((d) => d.status === "all").length;
 
   // Group into weeks
   const weeks: typeof heatmapData[] = [];
@@ -252,63 +283,101 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Activity Heatmap */}
-      <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground text-sm">Activity in the past year</h3>
-          <span className="text-[10px] text-dim">
-            {heatmapData.filter((d) => d.active).length} active days
+
+      {/* Monthly Calendar Activity */}
+      <div className="bg-surface border border-border rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 max-w-lg mx-auto w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-foreground text-sm">{calMonthName}</h3>
+          <span className="text-xs text-muted">
+            {perfectDays} perfect {perfectDays === 1 ? "day" : "days"}
           </span>
         </div>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-[3px] min-w-max">
-            {weeks.map((wk, wi) => (
-              <div key={wi} className="flex flex-col gap-[3px]">
-                {wk.map((day, di) => (
-                  <div
-                    key={di}
-                    className="w-[11px] h-[11px] rounded-[2px]"
-                    style={{
-                      backgroundColor: !day.date
-                        ? "transparent"
-                        : day.active
-                        ? c.olive
-                        : c.empty,
-                    }}
-                    title={
-                      day.date
-                        ? `${day.date}: ${day.active ? "Completed" : "No activity"}`
-                        : ""
-                    }
-                  />
-                ))}
-              </div>
-            ))}
-          </div>
+
+        {/* Day-of-week headers */}
+        <div className="grid grid-cols-7 mb-1">
+          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+            <div key={d} className="text-center text-[10px] text-muted py-0.5">{d}</div>
+          ))}
         </div>
-        <div className="flex items-center gap-2 mt-3 text-xs text-dim">
-          <span>No activity</span>
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c.empty }} />
-          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c.olive }} />
-          <span>Completed</span>
+
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-1">
+          {/* Empty cells before month starts */}
+          {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+            <div key={`empty-${i}`} />
+          ))}
+
+          {/* Day cells */}
+          {calendarDays.map(({ day, dateStr, status, completedCount, totalHabits, isToday }) => {
+            const bgStyle =
+              status === "all"
+                ? { backgroundColor: c.olive }
+                : status === "partial"
+                ? { backgroundColor: `${c.olive}80` }
+                : { backgroundColor: isDark ? "#1a2030" : "#dde3ee" };
+
+            return (
+              <div
+                key={dateStr}
+                title={`${dateStr}: ${completedCount}/${totalHabits} habits`}
+                className="aspect-square rounded-md flex items-center justify-center"
+                style={{
+                  ...bgStyle,
+                  outline: isToday ? `2px solid ${c.olive}` : "none",
+                  outlineOffset: "2px",
+                }}
+              >
+                <span
+                  className="text-[10px] sm:text-xs font-semibold"
+                  style={{
+                    color:
+                      status === "all" || status === "partial"
+                        ? "#fff"
+                        : isDark
+                        ? "#4a5060"
+                        : "#7a8090",
+                  }}
+                >
+                  {day}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-border">
+          <span className="text-[10px] text-muted">All habits done = solid green</span>
+          <div className="flex items-center gap-2.5 text-[10px] text-muted">
+            <span>None</span>
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: `${c.olive}80` }} />
+              <span>Partial</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: c.olive }} />
+              <span>All</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+      {/* Bottom row: 30-day trend + Category breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* 30-day trend */}
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">30-Day Completion Trend</h3>
-          <p className="text-[10px] text-dim mb-4">Habits completed per day</p>
+          <h3 className="font-semibold text-foreground mb-1 text-sm">Daily Completion</h3>
+          <p className="text-[10px] text-dim mb-4">Habits completed per day since you joined</p>
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={last30}>
+            <LineChart data={dailySince}>
               <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
               <XAxis
                 dataKey="date"
                 tick={{ fill: c.tick, fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                interval={6}
+                interval={Math.max(0, Math.floor(dailySince.length / 6) - 1)}
               />
               <YAxis
                 tick={{ fill: c.tick, fontSize: 11 }}
@@ -333,78 +402,6 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
 
-        {/* Weekly rate */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">12-Week Success Rate</h3>
-          <p className="text-[10px] text-dim mb-4">Percentage of habits completed each week</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={last12Weeks} barCategoryGap="25%">
-              <XAxis
-                dataKey="week"
-                tick={{ fill: c.tick, fontSize: 10 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fill: c.tick, fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                unit="%"
-                domain={[0, 100]}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value) => [`${value}%`, "Success Rate"]}
-              />
-              <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
-                {last12Weeks.map((entry, i) => (
-                  <Cell
-                    key={i}
-                    fill={entry.rate > 0 ? c.olive : c.empty}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Streaks */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">Current Streaks</h3>
-          <p className="text-[10px] text-dim mb-4">Consecutive days completed</p>
-          {streakData.length === 0 || streakData.every((s) => s.streak === 0) ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <Flame size={24} className="text-disabled mb-2" />
-              <p className="text-muted text-sm">No active streaks</p>
-              <p className="text-dim text-xs mt-1">Complete habits daily to build streaks!</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {streakData
-                .filter((s) => s.streak > 0)
-                .map((entry, i) => {
-                  const maxStreak = streakData[0]?.streak || 1;
-                  const width = Math.max(8, (entry.streak / maxStreak) * 100);
-                  return (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs text-muted w-20 truncate flex-shrink-0">{entry.name}</span>
-                      <div className="flex-1 h-6 bg-heatmap-empty rounded-md overflow-hidden relative">
-                        <div
-                          className="h-full rounded-md flex items-center justify-end pr-2 transition-all duration-500"
-                          style={{ width: `${width}%`, backgroundColor: c.olive }}
-                        >
-                          <span className="text-[10px] font-bold text-white">{entry.streak}d</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
         {/* Category breakdown */}
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
           <h3 className="font-semibold text-foreground mb-1 text-sm">Habits by Category</h3>
@@ -425,6 +422,7 @@ export default function AnalyticsPage() {
                   outerRadius={85}
                   paddingAngle={3}
                   dataKey="value"
+                  stroke="none"
                 >
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
@@ -432,6 +430,7 @@ export default function AnalyticsPage() {
                 </Pie>
                 <Tooltip
                   contentStyle={tooltipStyle}
+                  itemStyle={{ color: c.tooltipText }}
                   formatter={(value, name) => [
                     `${value} habit${value !== 1 ? "s" : ""}`,
                     name,
