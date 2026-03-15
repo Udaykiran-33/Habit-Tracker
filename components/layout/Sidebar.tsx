@@ -106,46 +106,48 @@ export default function Sidebar() {
           </Link>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                  active
-                    ? "bg-olive/20 text-olive-light border border-olive/30"
-                    : "text-muted hover:text-foreground hover:bg-surface-2"
-                )}
-              >
-                <Icon size={16} />
-                {label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Nav & Actions Container */}
+        <div className="flex-1 flex flex-col justify-between overflow-y-auto px-3 py-4">
+          <nav className="space-y-1">
+            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
+                    active
+                      ? "bg-olive/20 text-olive-light border border-olive/30"
+                      : "text-muted hover:text-foreground hover:bg-surface-2"
+                  )}
+                >
+                  <Icon size={16} />
+                  {label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Bottom actions */}
-        <div className="px-3 py-4 border-t border-sidebar-border space-y-1">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-olive-light hover:bg-olive/10 transition-all"
-          >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-            {theme === "dark" ? "Light Mode" : "Dark Mode"}
-          </button>
-          {/* Sign out */}
-          <button
-            onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
-            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
-          >
-            <LogOut size={16} />
-            Sign Out
-          </button>
+          {/* Bottom actions (Now sits naturally above safe area) */}
+          <div className="mt-8 space-y-1 pt-4 border-t border-sidebar-border">
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-olive-light hover:bg-olive/10 transition-all"
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
+            {/* Sign out */}
+            <button
+              onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-red-400 hover:bg-red-500/10 transition-all"
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
         </div>
       </aside>
     </>

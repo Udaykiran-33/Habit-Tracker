@@ -24,16 +24,23 @@ export default function HabitsPage() {
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
   const today = getTodayString();
 
   const fetchHabits = async () => {
-    const res = await fetch("/api/habits");
-    const { habits: raw } = await res.json();
-    const enriched = raw.map((h: Habit) => ({
-      ...h,
-      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
-    }));
-    setHabits(enriched);
+    try {
+      const res = await fetch("/api/habits");
+      const { habits: raw } = await res.json();
+      const enriched = raw.map((h: Habit) => ({
+        ...h,
+        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+      }));
+      setHabits(enriched);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setInitialLoading(false);
+    }
   };
 
   useEffect(() => { fetchHabits(); }, []);
@@ -86,8 +93,36 @@ export default function HabitsPage() {
     h.completions.some((c) => c.date === today)
   ).length;
 
+  if (initialLoading) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div>
+            <div className="w-48 h-8 bg-surface border border-border rounded-lg mb-2" />
+            <div className="w-32 h-4 bg-surface border border-border rounded-lg" />
+          </div>
+          <div className="w-32 h-10 bg-surface border border-border rounded-lg" />
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 h-10 bg-surface border border-border rounded-lg" />
+          <div className="w-full sm:w-48 h-10 bg-surface border border-border rounded-lg" />
+        </div>
+
+        {/* Habits List Skeleton */}
+        <div className="space-y-3 mt-8">
+          <div className="h-24 bg-surface border border-border rounded-xl" />
+          <div className="h-24 bg-surface border border-border rounded-xl" />
+          <div className="h-24 bg-surface border border-border rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto anime-enter">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>

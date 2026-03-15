@@ -114,22 +114,22 @@ export default function TodoPage() {
       </div>
 
       <form onSubmit={handleAddTodo} className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-8 shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             placeholder="What needs to be done?"
             value={task}
             onChange={(e) => setTask(e.target.value)}
-            className="w-full"
+            className="flex-1"
           />
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
             <Input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="flex-1"
+              className="w-[130px] sm:w-[150px]"
             />
-            <Button type="submit" loading={loading} className="px-6">
-              <Plus size={18} className="mr-2" />
+            <Button type="submit" loading={loading} className="px-5 sm:px-6 whitespace-nowrap h-10">
+              <Plus size={18} className="mr-1.5 sm:mr-2" />
               Add
             </Button>
           </div>
@@ -138,34 +138,45 @@ export default function TodoPage() {
 
       <div className="space-y-3">
         {todos.length === 0 ? (
-          <div className="text-center py-12 bg-surface/50 border border-border border-dashed rounded-2xl">
-            <CheckCircle2 size={40} className="mx-auto text-disabled mb-3" />
-            <p className="text-muted">No tasks for now. Add some to get started!</p>
+          <div className="text-center py-16 bg-surface/30 border border-border border-dashed rounded-2xl">
+            <CheckCircle2 size={48} className="mx-auto text-disabled mb-4" />
+            <p className="text-muted text-lg font-medium">No tasks for now</p>
+            <p className="text-dim text-sm mt-1">Add some above to get started!</p>
           </div>
         ) : (
           todos.map((todo) => (
             <div
               key={todo._id}
-              className={`flex items-center justify-between p-4 bg-surface border border-border rounded-xl transition-all ${
-                todo.completed ? "opacity-60 grayscale-[0.5]" : "shadow-sm border-l-4 border-l-olive"
+              className={`group flex items-center justify-between p-4 sm:p-5 border rounded-2xl transition-all duration-300 hover:shadow-md ${
+                todo.completed 
+                  ? "bg-surface-2 border-border/50 opacity-75" 
+                  : "bg-surface border-border shadow-sm hover:border-olive/30 hover:-translate-y-0.5"
               }`}
             >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
                 <button
                   onClick={() => handleToggle(todo._id, todo.completed)}
-                  className={`flex-shrink-0 transition-colors ${
-                    todo.completed ? "text-olive" : "text-muted hover:text-olive"
+                  className={`flex-shrink-0 transition-all duration-200 mt-0.5 ${
+                    todo.completed 
+                      ? "text-olive scale-110" 
+                      : "text-muted hover:text-olive hover:scale-110"
                   }`}
                 >
-                  {todo.completed ? <CheckCircle2 size={22} /> : <Circle size={22} />}
+                  {todo.completed ? <CheckCircle2 size={26} strokeWidth={2.5} /> : <Circle size={26} strokeWidth={2} />}
                 </button>
-                <div className="min-w-0">
-                  <p className={`text-sm sm:text-base font-medium truncate ${todo.completed ? "line-through text-muted" : "text-foreground"}`}>
+                <div className="min-w-0 flex-1">
+                  <p className={`text-base sm:text-lg font-medium transition-all duration-200 truncate ${
+                    todo.completed 
+                      ? "line-through text-dim" 
+                      : "text-foreground"
+                  }`}>
                     {todo.task}
                   </p>
                   {todo.time && (
-                    <div className="flex items-center gap-1.5 text-xs text-muted mt-0.5">
-                      <Clock size={12} />
+                    <div className={`flex items-center gap-1.5 text-xs sm:text-sm font-medium mt-1 transition-colors ${
+                      todo.completed ? "text-dim/80" : "text-olive-light"
+                    }`}>
+                      <Clock size={14} />
                       {todo.time}
                     </div>
                   )}
@@ -173,9 +184,10 @@ export default function TodoPage() {
               </div>
               <button
                 onClick={() => handleDelete(todo._id)}
-                className="p-2 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all ml-2"
+                className="p-2.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all sm:-mr-2"
+                title="Delete task"
               >
-                <Trash2 size={18} />
+                <Trash2 size={20} />
               </button>
             </div>
           ))
