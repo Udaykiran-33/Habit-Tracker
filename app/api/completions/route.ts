@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Habit, HabitCompletion, User } from "@/lib/models";
-import { getTodayString } from "@/lib/utils";
+import { getTodayString, calculateStreak } from "@/lib/utils";
 
 // Toggle habit completion for a specific date
 export async function POST(req: NextRequest) {
@@ -51,10 +51,32 @@ export async function POST(req: NextRequest) {
         completed: true,
       });
 
-      // Update user XP
+      // Fetch all completions for streak calculation
+      const allCompletions = await HabitCompletion.find({ habitId })
+        .sort({ date: -1 })
+        .lean();
+      
+      const completionDates = allCompletions.map(c => c.date);
+      const isDaily = habit.frequency === "Daily"; // Only daily for now, will update later for other frequencies
+      
+      // Calculate streak
+      const streak = calculateStreak(completionDates, habit.frequency);
+
+      // Award coins for 15-day consistency
+      let coinAwarded = false;
+      if (streak > 0 && streak % 15 === 0) {
+        coinAwarded = true;
+      }
+
+      // Update user XP and coins
       const result = await User.findOneAndUpdate(
         { _id: session.user.id },
-        { $inc: { xp: 10 } },
+        { 
+          $inc: { 
+            xp: 10,
+            coins: coinAwarded ? 1 : 0
+          } 
+        },
         { new: true }
       );
 

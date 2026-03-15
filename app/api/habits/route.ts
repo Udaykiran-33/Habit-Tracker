@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
-import { Habit, HabitCompletion } from "@/lib/models";
+import { Habit, HabitCompletion, User } from "@/lib/models";
 
 export async function GET() {
   const session = await auth();
@@ -53,6 +53,19 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
+    // Check coins
+    const user = await User.findById(session.user.id);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const currentCoins = user.coins ?? 0;
+    if (currentCoins < 1) {
+      return NextResponse.json({ 
+        error: "Insufficient U coins. Maintain consistency to earn more!" 
+      }, { status: 403 });
+    }
+
     const habit = await Habit.create({
       userId: session.user.id,
       name,
@@ -61,6 +74,10 @@ export async function POST(req: NextRequest) {
       color: color ?? "#6b8c3a",
       icon: icon ?? "target",
     });
+
+    // Deduct 1 coin
+    user.coins = currentCoins - 1;
+    await user.save();
 
     return NextResponse.json(
       { habit: { ...habit.toObject(), id: habit._id.toString() } },

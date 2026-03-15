@@ -18,6 +18,10 @@ import {
   LogOut,
   ChevronDown,
   ChevronUp,
+  Coins,
+  Plus,
+  Minus,
+  Save,
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -29,6 +33,15 @@ interface FeedbackItem {
   category: string;
   createdAt: string;
 }
+
+interface UserItem {
+  _id: string;
+  name: string;
+  email: string;
+  coins: number;
+  createdAt: string;
+}
+
 
 const CATEGORY_META: Record<
   string,
@@ -68,12 +81,22 @@ export default function AdminPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState("");
 
+  const [activeTab, setActiveTab] = useState<"feedback" | "users">("feedback");
+
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  /* ─── Users state ─── */
+  const [users, setUsers] = useState<UserItem[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editCoins, setEditCoins] = useState(0);
+  const [savingCoins, setSavingCoins] = useState(false);
 
   /* ─── Auth ─── */
   const handleLogin = async (e: React.FormEvent) => {
@@ -114,6 +137,60 @@ export default function AdminPage() {
       }
     })();
   }, [authed]);
+
+  /* ─── Fetch users ─── */
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch("/api/admin/users");
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch {
+      /* ignore */
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authed && activeTab === "users") {
+      fetchUsers();
+    }
+  }, [authed, activeTab]);
+
+  /* ─── Save coins ─── */
+  const handleSaveCoins = async (userId: string) => {
+    setSavingCoins(true);
+    try {
+      const res = await fetch("/api/admin/users/coins", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, coins: editCoins }),
+      });
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u._id === userId ? { ...u, coins: editCoins } : u
+          )
+        );
+        setEditingUserId(null);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setSavingCoins(false);
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    if (!userSearch) return users;
+    const q = userSearch.toLowerCase();
+    return users.filter(
+      (u) =>
+        u.name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+    );
+  }, [users, userSearch]);
 
   /* ─── Derived data ─── */
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -309,6 +386,26 @@ export default function AdminPage() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Tabs */}
+        <div className="flex gap-1 p-1 border rounded-xl mb-6 sm:mb-8 w-fit" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
+          {(["feedback", "users"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2"
+              style={{
+                backgroundColor: activeTab === tab ? "var(--olive-mid)" : "transparent",
+                color: activeTab === tab ? "#FAF6F0" : "var(--muted)",
+              }}
+            >
+              {tab === "feedback" ? <MessageSquare size={14} /> : <Users size={14} />}
+              {tab === "feedback" ? "Feedback" : "Users"}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "feedback" && (
+        <>
         {/* Page Title */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-xl sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
@@ -565,7 +662,202 @@ export default function AdminPage() {
             })}
           </div>
         )}
+        </>
+        )}
+
+        {activeTab === "users" && (
+        <>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
+              User Management
+            </h1>
+            <p className="text-sm mt-1 transition-colors" style={{ color: "var(--muted)" }}>
+              View all users and manage their U coin balance
+            </p>
+          </div>
+
+          {/* Users Stats */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+            {[
+              { label: "Total Users", value: users.length, icon: Users, color: "#8baf48" },
+              { label: "Total Coins in Circulation", value: users.reduce((sum, u) => sum + (u.coins || 0), 0), icon: Coins, color: "#e2a63d" },
+              { label: "Users with 0 Coins", value: users.filter((u) => (u.coins || 0) === 0).length, icon: HelpCircle, color: "#e25c5c" },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <div
+                  key={s.label}
+                  className="border rounded-xl p-3 sm:p-4 transition-all group hover:border-[var(--muted)]"
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center transition-transform group-hover:scale-110"
+                      style={{ backgroundColor: `${s.color}15` }}
+                    >
+                      <Icon size={15} style={{ color: s.color }} />
+                    </div>
+                  </div>
+                  <p className="text-lg sm:text-2xl font-bold transition-colors" style={{ color: "var(--foreground)" }}>
+                    {s.value}
+                  </p>
+                  <p className="text-[10px] sm:text-xs mt-0.5 transition-colors" style={{ color: "var(--muted)" }}>
+                    {s.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* User Search */}
+          <div className="relative mb-4">
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 transition-colors"
+              style={{ color: "var(--muted)" }}
+            />
+            <input
+              type="text"
+              placeholder="Search by name or email…"
+              value={userSearch}
+              onChange={(e) => setUserSearch(e.target.value)}
+              className="w-full border rounded-xl pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-[var(--olive-light)] transition-colors"
+              style={{
+                backgroundColor: "var(--surface)",
+                borderColor: "var(--border)",
+                color: "var(--foreground)",
+              }}
+            />
+          </div>
+
+          <p className="text-xs mb-4 transition-colors" style={{ color: "var(--muted)" }}>
+            Showing {filteredUsers.length} of {users.length} users
+          </p>
+
+          {/* Users Table */}
+          {usersLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="border rounded-xl p-5 animate-pulse transition-colors"
+                  style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full" style={{ backgroundColor: "var(--surface-2)" }} />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 rounded w-1/4" style={{ backgroundColor: "var(--surface-2)" }} />
+                      <div className="h-2 rounded w-1/6" style={{ backgroundColor: "var(--surface-2)" }} />
+                    </div>
+                    <div className="h-8 rounded-lg w-20" style={{ backgroundColor: "var(--surface-2)" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="border border-dashed rounded-xl p-12 text-center transition-colors" style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}>
+              <Users size={32} className="mx-auto mb-3 transition-colors" style={{ color: "var(--muted)" }} />
+              <p className="text-sm transition-colors" style={{ color: "var(--muted)" }}>
+                {users.length === 0 ? "No users found" : "No users match your search"}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredUsers.map((user) => {
+                const initials = user.name
+                  .split(" ")
+                  .map((w) => w[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2);
+                const isEditing = editingUserId === user._id;
+
+                return (
+                  <div
+                    key={user._id}
+                    className="border rounded-xl p-4 sm:p-5 transition-all"
+                    style={{ backgroundColor: "var(--surface)", borderColor: "var(--border)" }}
+                    onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--muted)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
+                  >
+                    <div className="flex items-center gap-3">
+                      {/* Avatar */}
+                      <div className="w-10 h-10 rounded-full bg-[var(--olive-mid)]/15 flex items-center justify-center text-[var(--olive-light)] text-xs font-bold flex-shrink-0">
+                        {initials}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate transition-colors" style={{ color: "var(--foreground)" }}>
+                          {user.name}
+                        </p>
+                        <p className="text-[10px] truncate transition-colors" style={{ color: "var(--muted)" }}>
+                          {user.email}
+                        </p>
+                        <p className="text-[10px] mt-0.5 transition-colors" style={{ color: "var(--muted)" }}>
+                          Joined {new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </p>
+                      </div>
+
+                      {/* Coin Section */}
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setEditCoins(Math.max(0, editCoins - 1))}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-red-500/10"
+                            style={{ color: "var(--muted)", border: "1px solid var(--border)" }}
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="text-lg font-bold min-w-[2rem] text-center" style={{ color: "var(--foreground)" }}>
+                            {editCoins}
+                          </span>
+                          <button
+                            onClick={() => setEditCoins(editCoins + 1)}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-green-500/10"
+                            style={{ color: "var(--muted)", border: "1px solid var(--border)" }}
+                          >
+                            <Plus size={14} />
+                          </button>
+                          <button
+                            onClick={() => handleSaveCoins(user._id)}
+                            disabled={savingCoins}
+                            className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 flex items-center gap-1.5"
+                            style={{ backgroundColor: "var(--olive-mid)", color: "#FAF6F0" }}
+                          >
+                            <Save size={12} />
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingUserId(null)}
+                            className="px-2 py-1.5 rounded-lg text-xs font-medium transition-all"
+                            style={{ color: "var(--muted)" }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditingUserId(user._id);
+                            setEditCoins(user.coins || 0);
+                          }}
+                          className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all hover:border-[var(--olive-light)]" 
+                          style={{ borderColor: "var(--border)", color: "var(--foreground)" }}
+                        >
+                          🪙 {user.coins || 0}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+        )}
       </div>
     </div>
   );
+
 }

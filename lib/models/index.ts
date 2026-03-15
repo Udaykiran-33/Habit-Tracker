@@ -1,8 +1,5 @@
-export { User } from "./User";
-export type { IUser } from "./User";
-export { Habit } from "./Habit";
-export type { IHabit } from "./Habit";
-export { HabitCompletion } from "./HabitCompletion";
-export type { IHabitCompletion } from "./HabitCompletion";
-export { Feedback } from "./Feedback";
-export type { IFeedback } from "./Feedback";
+export * from "./User";
+export * from "./Habit";
+export * from "./HabitCompletion";
+export * from "./Feedback";
+export * from "./Todo";

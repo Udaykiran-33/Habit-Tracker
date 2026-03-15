@@ -8,11 +8,11 @@ import {
   Target,
   TrendingUp,
   Plus,
-  RefreshCw,
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
+import ConfirmModal from "@/components/ui/ConfirmModal";
 import { getTodayString, calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
 import {
   BarChart,
@@ -44,6 +44,7 @@ interface DashStats {
   successRate: number;
   xp: number;
   level: number;
+  coins: number;
   weekly: { day: string; completed: number; total: number }[];
 }
 
@@ -53,69 +54,41 @@ export default function DashboardPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [stats, setStats] = useState<DashStats | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const today = getTodayString();
 
   const isDark = theme === "dark";
 
   const fetchData = async () => {
-    try {
-      const [hRes, sRes] = await Promise.all([
-        fetch("/api/habits"),
-        fetch("/api/stats"),
-      ]);
-      const { habits: rawHabits } = await hRes.json();
-      const statsData = await sRes.json();
+    const [hRes, sRes] = await Promise.all([
+      fetch("/api/habits"),
+      fetch("/api/stats"),
+    ]);
+    const { habits: rawHabits } = await hRes.json();
+    const statsData = await sRes.json();
 
-      const enriched = rawHabits.map((h: Habit) => ({
-        ...h,
-        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
-      }));
+    const enriched = rawHabits.map((h: Habit) => ({
+      ...h,
+      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date), h.frequency),
+    }));
 
-      setHabits(enriched);
-      setStats(statsData);
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
+    setHabits(enriched);
+    setStats(statsData);
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = async (habitId: string) => {
-    // Optimistic UI update
-    setHabits(currentHabits => currentHabits.map(habit => {
-      if (habit.id === habitId) {
-        const isCompleted = habit.completions.some(c => c.date === today);
-        let newCompletions = isCompleted
-          ? habit.completions.filter(c => c.date !== today)
-          : [...habit.completions, { date: today }];
-        return {
-          ...habit,
-          completions: newCompletions,
-          streak: calculateStreak(newCompletions.map(c => c.date)),
-        };
-      }
-      return habit;
-    }));
-
-    // Perform API request without await-blocking UI
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
-    
     if (res.ok) {
+      await fetchData();
       const { completed } = await res.clone().json().catch(() => ({}));
       toast.success(completed ? "Habit completed! +10 XP" : "Unmarked");
-      // Sync with server to update XP/stats globally
-      fetchData();
-    } else {
-      toast.error("Failed to update habit");
-      fetchData(); // Revert on error
     }
   };
 
@@ -130,15 +103,24 @@ export default function DashboardPage() {
     if (res.ok) {
       await fetchData();
       toast.success(data.id ? "Habit updated!" : "Habit created!");
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      toast.error(errData.error || "Failed to save habit");
     }
   };
 
-  const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/habits/${id}`, { method: "DELETE" });
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    const res = await fetch(`/api/habits/${deleteId}`, { method: "DELETE" });
     if (res.ok) {
       await fetchData();
       toast.success("Habit removed");
     }
+    setDeleteId(null);
   };
 
   const completedHabits = habits.filter((h) =>
@@ -173,9 +155,17 @@ export default function DashboardPage() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        <Button onClick={() => { setEditHabit(null); setModalOpen(true); }} className="flex-shrink-0">
-          <Plus size={15} /> <span className="hidden sm:inline">New Habit</span><span className="sm:hidden">Add</span>
-        </Button>
+        <div className="flex items-center gap-3">
+          {stats !== null && (
+            <div className="flex items-center bg-surface border border-border px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
+              <span className="mr-1.5" role="img" aria-label="coin">🪙</span>
+              <span>{stats.coins} U</span>
+            </div>
+          )}
+          <Button onClick={() => { setEditHabit(null); setModalOpen(true); }} className="flex-shrink-0">
+            <Plus size={15} /> <span className="hidden sm:inline">New Habit</span><span className="sm:hidden">Add</span>
+          </Button>
+        </div>
       </div>
 
       {/* XP Bar */}
@@ -203,7 +193,7 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-6">
           <StatsCard
             label="Total Habits"
             value={stats.totalHabits}
@@ -217,18 +207,6 @@ export default function DashboardPage() {
             accent
             sub={`${stats.successRate}% success rate`}
           />
-          <StatsCard
-            label="Best Streak"
-            value={`${stats.bestStreak} days`}
-            icon={Flame}
-            sub="Keep it going!"
-          />
-          <StatsCard
-            label="Success Rate"
-            value={`${stats.successRate}%`}
-            icon={TrendingUp}
-            sub="Overall today"
-          />
         </div>
       )}
 
@@ -241,12 +219,7 @@ export default function DashboardPage() {
               {completedHabits.length}/{habits.length} done
             </span>
           </div>
-          {loading ? (
-            <div className="bg-surface border border-border border-dashed rounded-xl p-8 sm:p-10 flex flex-col items-center justify-center min-h-[200px]">
-              <RefreshCw size={24} className="text-olive animate-spin mb-3" />
-              <p className="text-muted text-sm">Loading your habits...</p>
-            </div>
-          ) : habits.length === 0 ? (
+          {habits.length === 0 ? (
             <div className="bg-surface border border-border border-dashed rounded-xl p-8 sm:p-10 text-center">
               <Target size={28} className="text-disabled mx-auto mb-2" />
               <p className="text-muted text-sm">No habits yet</p>
@@ -296,9 +269,9 @@ export default function DashboardPage() {
                       color: chartColors.tooltipText,
                       fontSize: "11px",
                     }}
-                    cursor={false}
+                    cursor={{ fill: chartColors.cursorFill }}
                   />
-                  <Bar dataKey="completed" radius={[4, 4, 0, 0]} activeBar={false}>
+                  <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
                     {stats.weekly.map((entry, i) => (
                       <Cell
                         key={i}
@@ -346,6 +319,16 @@ export default function DashboardPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
+      />
+
+      <ConfirmModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        title="Delete Habit"
+        message="Are you sure you want to delete this habit? This action cannot be undone and your progress will be lost."
+        confirmText="Confirm"
+        cancelText="Back"
       />
     </div>
   );

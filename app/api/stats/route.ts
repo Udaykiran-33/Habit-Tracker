@@ -15,7 +15,7 @@ export async function GET() {
   const today = getTodayString();
 
   const user = await User.findById(session.user.id)
-    .select("xp level createdAt")
+    .select("xp level coins")
     .lean();
 
   const habits = await Habit.find({
@@ -44,7 +44,7 @@ export async function GET() {
   ).length;
 
   const streaks = habits.map((h) =>
-    calculateStreak(groupedCompletions[h._id.toString()] ?? [])
+    calculateStreak(groupedCompletions[h._id.toString()] ?? [], h.frequency)
   );
   const bestStreak = Math.max(0, ...streaks);
   const successRate =
@@ -73,7 +73,7 @@ export async function GET() {
     successRate,
     xp: user?.xp ?? 0,
     level: user?.level ?? 1,
-    joinedAt: user?.createdAt,
+    coins: user?.coins ?? 0,
     weekly,
     streaks: habits.map((h, i) => ({
       habitId: h._id.toString(),

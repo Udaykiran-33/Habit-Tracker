@@ -16,7 +16,7 @@ import {
   Legend,
 } from "recharts";
 import { calculateStreak, getTodayString } from "@/lib/utils";
-import { TrendingUp, Flame, Target, Calendar, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react";
+import { TrendingUp, Flame, Target, Calendar, RefreshCw } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface Habit {
@@ -34,7 +34,6 @@ interface Stats {
   successRate: number;
   xp: number;
   level: number;
-  joinedAt?: string;
 }
 
 export default function AnalyticsPage() {
@@ -42,7 +41,6 @@ export default function AnalyticsPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [currentDate, setCurrentDate] = useState(new Date());
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
@@ -77,42 +75,44 @@ export default function AnalyticsPage() {
     habits.flatMap((h) => h.completions.map((c) => c.date))
   );
 
-  // Historical data (from join date to today)
-  const historicalData = (() => {
-    if (!stats?.joinedAt) return [];
-    
-    const joinDate = new Date(stats.joinedAt);
-    joinDate.setHours(0, 0, 0, 0); // start of join day 
-    
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // start of today
-    
-    // Calculate total days between join and today
-    const diffTime = Math.abs(now.getTime() - joinDate.getTime());
-    let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; 
+  // Last 30 days data
+  const last30 = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (29 - i));
+    const dateStr = d.toISOString().split("T")[0];
+    const completed = habits.filter((h) =>
+      h.completions.some((c) => c.date === dateStr)
+    ).length;
+    const rate = habits.length > 0 ? Math.round((completed / habits.length) * 100) : 0;
+    return {
+      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      fullDate: dateStr,
+      completed,
+      total: habits.length,
+      rate,
+    };
+  });
 
-    // Always show at least 7 days for a better-looking chart 
-    if (diffDays < 7) {
-      diffDays = 7;
-    }
-
-    return Array.from({ length: diffDays }, (_, i) => {
-      const d = new Date();
-      d.setDate(now.getDate() - (diffDays - 1 - i));
-      const dateStr = d.toISOString().split("T")[0];
-      const completed = habits.filter((h) =>
-        h.completions.some((c) => c.date === dateStr)
-      ).length;
-      
-      return {
-        date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-        fullDate: dateStr,
-        completed,
-      };
+  // Last 12 weeks
+  const last12Weeks = Array.from({ length: 12 }, (_, i) => {
+    const weekEnd = new Date();
+    weekEnd.setDate(weekEnd.getDate() - (11 - i) * 7);
+    const weekDates = Array.from({ length: 7 }, (_, d) => {
+      const day = new Date(weekEnd);
+      day.setDate(weekEnd.getDate() - (6 - d));
+      return day.toISOString().split("T")[0];
     });
-  })();
-
-
+    const totalPossible = habits.length * 7;
+    const completions = habits.reduce((sum, h) => {
+      return sum + weekDates.filter((d) => h.completions.some((c) => c.date === d)).length;
+    }, 0);
+    return {
+      week: `W${i + 1}`,
+      completions,
+      possible: totalPossible,
+      rate: totalPossible > 0 ? Math.round((completions / totalPossible) * 100) : 0,
+    };
+  });
 
   // Category breakdown
   const categoryInfo = habits.reduce<Record<string, { habitCount: number; totalCompletions: number; color: string }>>((acc, h) => {
@@ -150,32 +150,35 @@ export default function AnalyticsPage() {
     ? (totalCompletions / allCompletionDates.size).toFixed(1)
     : "0";
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthName = currentDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const getDayStatus = (dateStr: string) => {
-    const completedCount = habits.filter(h => h.completions.some(c => c.date === dateStr)).length;
-    if (completedCount === 0) return "none";
-    if (completedCount === habits.length) return "all";
-    return "partial";
-  };
-
-  // Calculate perfect days in current month
-  let perfectDaysCount = 0;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    if (dateStr <= today && getDayStatus(dateStr) === "all") {
-      perfectDaysCount++;
-    }
+  // Activity heatmap
+  const heatmapData: { date: string; active: boolean }[] = [];
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const active = habits.some((h) => h.completions.some((c) => c.date === dateStr));
+    heatmapData.push({ date: dateStr, active });
   }
 
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  // Group into weeks
+  const weeks: typeof heatmapData[] = [];
+  let week: typeof heatmapData = [];
+  const firstHeatDate = new Date(heatmapData[0]?.date ?? today);
+  const startDay = firstHeatDate.getDay();
+  for (let i = 0; i < startDay; i++) {
+    week.push({ date: "", active: false });
+  }
+  for (const entry of heatmapData) {
+    week.push(entry);
+    if (week.length === 7) {
+      weeks.push(week);
+      week = [];
+    }
+  }
+  if (week.length > 0) {
+    while (week.length < 7) week.push({ date: "", active: false });
+    weeks.push(week);
+  }
 
   // Theme-aware chart colors
   const c = {
@@ -188,12 +191,6 @@ export default function AnalyticsPage() {
     oliveLight: isDark ? "#8baf48" : "#4A6828",
     empty: isDark ? "#1a1a1a" : "#E8E2D8",
     legendText: isDark ? "#888" : "#6B6560",
-    
-    // Calendar colors
-    calBg: isDark ? "#1c1c1c" : "#ffffff",
-    cellEmpty: isDark ? "#232323" : "#f0f0f0",
-    cellPartial: isDark ? "#5A7832" : "#a6c97a", // Olive mid
-    cellAll: isDark ? "#8baf48" : "#6b8c3a",     // Olive light
   };
 
   const tooltipStyle = {
@@ -255,127 +252,63 @@ export default function AnalyticsPage() {
         ))}
       </div>
 
-      {/* Monthly Calendar Widget */}
-      <div className="bg-surface border border-border rounded-2xl p-4 sm:p-5 lg:p-6 mb-4 sm:mb-6 mx-auto max-w-3xl" style={{ backgroundColor: c.calBg }}>
-        {/* Navigation & Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setCurrentDate(new Date(year, month - 1, 1))}
-              className="p-1.5 rounded-lg hover:bg-surface-2 text-muted hover:text-foreground transition-colors"
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <h3 className="text-lg font-semibold text-foreground">{monthName}</h3>
-            <button
-              onClick={() => setCurrentDate(new Date(year, month + 1, 1))}
-              className="p-1.5 rounded-lg hover:bg-surface-2 text-muted hover:text-foreground transition-colors disabled:opacity-30"
-              disabled={new Date(year, month + 1, 1) > new Date()}
-            >
-              <ChevronRight size={18} />
-            </button>
-          </div>
-          <span className="text-sm font-medium text-muted">
-            {perfectDaysCount} perfect day{perfectDaysCount !== 1 ? 's' : ''}
+      {/* Activity Heatmap */}
+      <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 mb-4 sm:mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-semibold text-foreground text-sm">Activity in the past year</h3>
+          <span className="text-[10px] text-dim">
+            {heatmapData.filter((d) => d.active).length} active days
           </span>
         </div>
-
-        {/* Day labels */}
-        <div className="grid grid-cols-7 gap-2 sm:gap-3 mb-2">
-          {days.map((d) => (
-            <div key={d} className="text-center text-xs text-muted font-medium mb-2">
-              {d}
-            </div>
-          ))}
-        </div>
-
-        {/* Calendar cells */}
-        <div className="grid grid-cols-7 gap-2 sm:gap-3">
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`pad-${i}`} className="aspect-square" />
-          ))}
-
-          {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
-            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-            const status = getDayStatus(dateStr);
-            const isToday = dateStr === today;
-            const isFuture = dateStr > today;
-
-            let bgColor = c.cellEmpty;
-            let textColor = isDark ? "#666" : "#aaa";
-            let borderColor = "transparent";
-
-            if (!isFuture) {
-              if (status === "all") {
-                bgColor = c.cellAll;
-                textColor = "#fff";
-                if (isToday) borderColor = "rgba(255,255,255,0.3)";
-              } else if (status === "partial") {
-                bgColor = c.cellPartial;
-                textColor = "#fff";
-                if (isToday) borderColor = "rgba(255,255,255,0.3)";
-              } else {
-                textColor = isDark ? "#888" : "#888";
-                if (isToday) borderColor = isDark ? "#555" : "#ccc";
-              }
-            }
-
-            return (
-              <div
-                key={day}
-                className={`aspect-square rounded-xl flex items-center justify-center text-sm font-medium transition-all shadow-sm ${
-                  isFuture ? "opacity-50" : "hover:brightness-110"
-                }`}
-                style={{
-                  backgroundColor: bgColor,
-                  color: textColor,
-                  border: `2px solid ${borderColor}`,
-                }}
-              >
-                {day}
+        <div className="overflow-x-auto pb-2">
+          <div className="flex gap-[3px] min-w-max">
+            {weeks.map((wk, wi) => (
+              <div key={wi} className="flex flex-col gap-[3px]">
+                {wk.map((day, di) => (
+                  <div
+                    key={di}
+                    className="w-[11px] h-[11px] rounded-[2px]"
+                    style={{
+                      backgroundColor: !day.date
+                        ? "transparent"
+                        : day.active
+                        ? c.olive
+                        : c.empty,
+                    }}
+                    title={
+                      day.date
+                        ? `${day.date}: ${day.active ? "Completed" : "No activity"}`
+                        : ""
+                    }
+                  />
+                ))}
               </div>
-            );
-          })}
-        </div>
-
-        {/* Calendar legend */}
-        <div className="flex items-center justify-between mt-8 text-xs text-muted font-medium gap-4 flex-wrap">
-          <span className="flex items-center">
-            All habits done = solid green
-          </span>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span>None</span>
-              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellEmpty }} />
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellPartial }} />
-              <span>Partial</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 rounded-sm" style={{ backgroundColor: c.cellAll }} />
-              <span>All</span>
-            </div>
+            ))}
           </div>
+        </div>
+        <div className="flex items-center gap-2 mt-3 text-xs text-dim">
+          <span>No activity</span>
+          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c.empty }} />
+          <div className="w-[11px] h-[11px] rounded-[2px]" style={{ backgroundColor: c.olive }} />
+          <span>Completed</span>
         </div>
       </div>
 
       {/* Charts Row */}
-      <div className="mb-4 sm:mb-6 w-full">
-        {/* Historical trend */}
-        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5 w-full">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">Historical Completion Trend</h3>
-          <p className="text-[10px] text-dim mb-4">Habits completed per day since joining</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={historicalData}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+        {/* 30-day trend */}
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">30-Day Completion Trend</h3>
+          <p className="text-[10px] text-dim mb-4">Habits completed per day</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={last30}>
               <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
               <XAxis
                 dataKey="date"
                 tick={{ fill: c.tick, fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                interval="preserveStartEnd"
-                minTickGap={30}
+                interval={6}
               />
               <YAxis
                 tick={{ fill: c.tick, fontSize: 11 }}
@@ -393,10 +326,45 @@ export default function AnalyticsPage() {
                 dataKey="completed"
                 stroke={c.olive}
                 strokeWidth={2}
-                dot={historicalData.length <= 14 ? { r: 3, fill: c.olive } : false}
+                dot={false}
                 activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
               />
             </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Weekly rate */}
+        <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
+          <h3 className="font-semibold text-foreground mb-1 text-sm">12-Week Success Rate</h3>
+          <p className="text-[10px] text-dim mb-4">Percentage of habits completed each week</p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={last12Weeks} barCategoryGap="25%">
+              <XAxis
+                dataKey="week"
+                tick={{ fill: c.tick, fontSize: 10 }}
+                axisLine={false}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: c.tick, fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                unit="%"
+                domain={[0, 100]}
+              />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(value) => [`${value}%`, "Success Rate"]}
+              />
+              <Bar dataKey="rate" radius={[4, 4, 0, 0]}>
+                {last12Weeks.map((entry, i) => (
+                  <Cell
+                    key={i}
+                    fill={entry.rate > 0 ? c.olive : c.empty}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>

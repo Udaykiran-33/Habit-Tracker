@@ -24,7 +24,7 @@ interface AddHabitModalProps {
   editHabit?: Habit | null;
 }
 
-const FREQUENCIES = ["Daily", "Weekly", "3x per week", "Weekdays", "Weekends"];
+const FREQUENCIES = ["Daily", "Weekly", "3x per week"];
 
 export default function AddHabitModal({
   isOpen,
@@ -122,7 +122,6 @@ export default function AddHabitModal({
             ))}
           </div>
         </div>
-
 
 
         <div className="flex gap-3 pt-2">

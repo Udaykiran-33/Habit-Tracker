@@ -121,7 +121,7 @@ export default function LandingClient() {
 
         /* ═══ NAV ═══ */
         .n { display:flex; align-items:center; justify-content:space-between; padding:1rem 6vw; position:sticky; top:0; z-index:100; background:rgba(250,246,240,0.9); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid ${C.creamDark}; }
-        .n-logo { font-size:1.3rem; font-weight:900; letter-spacing:-0.04em; color:${C.black}; }
+        .n-logo { font-size:1.3rem; font-weight:600; letter-spacing:-0.04em; color:${C.black}; }
         .n-links { display:flex; align-items:center; gap:0.85rem; }
         .n-si { color:${C.black}; text-decoration:none; font-size:0.85rem; font-weight:500; opacity:0.55; }
         .n-si:hover { opacity:1; }
@@ -275,7 +275,7 @@ export default function LandingClient() {
               <Image src="/hero-mockup.png" alt="UrHabit dashboard" width={480} height={350} priority className="h-img" />
               <div ref={stat1Ref} className="fs fs-t">
                 <div className="fs-l">Current Streak</div>
-                <div className="fs-v">🔥 21 days</div>
+                <div className="fs-v">21 days</div>
               </div>
               <div ref={stat2Ref} className="fs fs-b">
                 <div className="fs-l">Completion Rate</div>
