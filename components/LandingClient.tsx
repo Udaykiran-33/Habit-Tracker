@@ -245,7 +245,7 @@ export default function LandingClient() {
 
         {/* ── NAV ── */}
         <nav ref={navRef} className="n">
-          <span className="n-logo"><img src="/logo.png" alt="UrHabit" style={{ width: 32, height: 32, borderRadius: 8, display: "inline-block", verticalAlign: "middle", marginRight: 8 }} />UrHabit</span>
+          <span className="n-logo"><img src="/logo.png" alt="UrHabit" style={{ width: 40, height: 40, borderRadius: 8, display: "inline-block", verticalAlign: "middle", marginRight: 8 }} />Ur<span style={{ color: "#697a1dff" }}>Habit</span></span>
           <div className="n-links">
             <Link href="/login" className="n-si">Sign In</Link>
             <Link href="/register" className="n-cta">Get Started</Link>
