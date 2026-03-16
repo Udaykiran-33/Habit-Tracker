@@ -75,24 +75,24 @@ export default function LandingClient() {
       /* ── Features title ── */
       gsap.from(featTitleRef.current, {
         scrollTrigger: { trigger: featTitleRef.current, start: "top 88%", once: true },
-        y: 35, opacity: 0, duration: 0.7, ease: "power3.out",
+        y: 25, opacity: 0, duration: 0.7, ease: "power2.out",
       });
 
       /* ── Feature cards stagger ── */
       const cards = featuresRef.current?.querySelectorAll(".fc");
       if (cards) {
         gsap.from(cards, {
-          scrollTrigger: { trigger: featuresRef.current, start: "top 82%", once: true },
-          y: 55, opacity: 0, duration: 0.7, stagger: 0.1, ease: "power3.out",
+          scrollTrigger: { trigger: featuresRef.current, start: "top 85%", once: true },
+          y: 35, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power2.out",
         });
       }
 
       /* ── Social proof ── */
       ScrollTrigger.create({
-        trigger: proofRef.current, start: "top 86%", once: true,
+        trigger: proofRef.current, start: "top 85%", once: true,
         onEnter: () => {
           gsap.from(proofRef.current!.querySelectorAll(".sp-item"), {
-            y: 35, opacity: 0, duration: 0.65, stagger: 0.12, ease: "power3.out",
+            y: 25, opacity: 0, duration: 0.6, stagger: 0.1, ease: "power2.out",
           });
         },
       });
@@ -100,13 +100,13 @@ export default function LandingClient() {
       /* ── CTA ── */
       gsap.from(ctaSectionRef.current, {
         scrollTrigger: { trigger: ctaSectionRef.current, start: "top 88%", once: true },
-        y: 40, opacity: 0, duration: 0.8, ease: "power3.out",
+        y: 25, opacity: 0, duration: 0.7, ease: "power2.out",
       });
 
       /* ── Footer ── */
       gsap.from(footerRef.current, {
-        scrollTrigger: { trigger: footerRef.current, start: "top 96%", once: true },
-        y: 20, opacity: 0, duration: 0.5, ease: "power2.out",
+        scrollTrigger: { trigger: footerRef.current, start: "top 95%", once: true },
+        y: 15, opacity: 0, duration: 0.5, ease: "power2.out",
       });
     });
 
@@ -117,7 +117,7 @@ export default function LandingClient() {
     <>
       <style>{`
         /* ═══ BASE ═══ */
-        .lp { background:${C.cream}; color:${C.black}; min-height:100vh; font-family:'Inter',system-ui,Arial,sans-serif; overflow-x:hidden; }
+        .lp { background:${C.cream}; color:${C.black}; min-height:100vh; font-family:'Inter',system-ui,Arial,sans-serif; overflow-x:clip; }
 
         /* ═══ NAV ═══ */
         .n { display:flex; align-items:center; justify-content:space-between; padding:1rem 6vw; position:sticky; top:0; z-index:100; background:rgba(250,246,240,0.9); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid ${C.creamDark}; }

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
+import CoinUsageModal from "@/components/ui/CoinUsageModal";
 import Button from "@/components/ui/Button";
 import { cn, getTodayString, calculateStreak, HABIT_CATEGORIES } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -23,6 +24,7 @@ export default function HabitsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
+  const [coinModalOpen, setCoinModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const today = getTodayString();
@@ -77,7 +79,11 @@ export default function HabitsPage() {
     });
     if (res.ok) {
       await fetchHabits();
-      toast.success(data.id ? "Habit updated!" : "Habit created!");
+      if (!data.id) {
+        setCoinModalOpen(true);
+      } else {
+        toast.success("Habit updated!");
+      }
     }
   };
 
@@ -230,6 +236,11 @@ export default function HabitsPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
+      />
+
+      <CoinUsageModal
+        isOpen={coinModalOpen}
+        onClose={() => setCoinModalOpen(false)}
       />
     </div>
   );

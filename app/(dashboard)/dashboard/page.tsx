@@ -12,6 +12,7 @@ import {
 import StatsCard from "@/components/dashboard/StatsCard";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
+import CoinUsageModal from "@/components/ui/CoinUsageModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { getTodayString, calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
 import {
@@ -54,6 +55,7 @@ export default function DashboardPage() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [stats, setStats] = useState<DashStats | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [coinModalOpen, setCoinModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,7 +141,12 @@ export default function DashboardPage() {
     });
     if (res.ok) {
       await fetchData();
-      toast.success(data.id ? "Habit updated!" : "Habit created!", { duration: 1000 });
+      if (!data.id) {
+        // Only show coin modal on creation, not on edit
+        setCoinModalOpen(true);
+      } else {
+        toast.success("Habit updated!", { duration: 1000 });
+      }
     } else {
       const errData = await res.json().catch(() => ({}));
       toast.error(errData.error || "Failed to save habit", { duration: 1000 });
@@ -395,6 +402,11 @@ export default function DashboardPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
+      />
+
+      <CoinUsageModal
+        isOpen={coinModalOpen}
+        onClose={() => setCoinModalOpen(false)}
       />
 
       <ConfirmModal

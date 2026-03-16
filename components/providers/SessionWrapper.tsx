@@ -6,5 +6,5 @@ export default function SessionWrapper({
 }: {
   children: React.ReactNode;
 }) {
-  return <SessionProvider basePath="/api/auth">{children}</SessionProvider>;
+  return <SessionProvider>{children}</SessionProvider>;
 }

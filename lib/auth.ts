@@ -73,11 +73,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Allows relative callback URLs
-      if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Allows callback URLs on the same origin
-      else if (new URL(url).origin === baseUrl) return url;
-      // In Vercel environments, allow custom origins if they are provided
+      // Handle the case where baseUrl might be undefined or missing scheme
+      try {
+        const urlObj = new URL(url);
+        const baseUrlObj = new URL(baseUrl || "http://localhost:3000"); // fallback
+        if (urlObj.origin === baseUrlObj.origin) return url;
+        if (url.startsWith("/")) return `${baseUrlObj.origin}${url}`;
+      } catch (e) {
+        if (url.startsWith("/")) return `${baseUrl}${url}`;
+      }
       return url;
     },
   },
