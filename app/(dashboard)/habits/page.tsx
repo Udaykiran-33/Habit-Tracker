@@ -35,7 +35,7 @@ export default function HabitsPage() {
       const { habits: raw } = await res.json();
       const enriched = raw.map((h: Habit) => ({
         ...h,
-        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+        streak: calculateStreak(h.completions.map((c: { date: string }) => c.date), h.frequency),
       }));
       setHabits(enriched);
     } catch (e) {

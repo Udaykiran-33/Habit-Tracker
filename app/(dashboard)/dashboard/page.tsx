@@ -122,7 +122,7 @@ export default function DashboardPage() {
           toast.success("✓ +10 XP", { duration: 1000 });
         }
       } else {
-        toast("Unmarked", { icon: "↩️", duration: 1000 });
+        toast("Unmarked", {duration: 1000 });
       }
     } else {
       // Revert optimistic update on failure
