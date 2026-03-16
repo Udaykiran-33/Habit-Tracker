@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* ─── Dark theme (default) ─── */
+/* Dark theme (default) */
 :root,
 [data-theme="dark"] {
   --background: #0a0a0a;
@@ -25,7 +25,7 @@
   --sidebar-border: #1e1e1e;
 }
 
-/* ─── Light theme ─── */
+/* Light theme */
 [data-theme="light"] {
   --background: #FAF6F0;
   --surface: #FFFFFF;

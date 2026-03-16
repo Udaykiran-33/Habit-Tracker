@@ -1,0 +1,22 @@
+﻿diff --git a/components/LandingClient.tsx b/components/LandingClient.tsx
+index 9996cda..707889d 100644
+--- a/components/LandingClient.tsx
++++ b/components/LandingClient.tsx
+@@ -257,7 +257,7 @@ export default function LandingClient() {
+           <div>
+             <div ref={badgeRef} className="h-badge">Discipline Builds Destiny</div>
+             <h1 ref={h1Ref} className="h-title">
+-              Build Habits That<br />
++              Build Unlimited Habits That<br />
+               <span className="h-acc">Actually Stick</span>
+             </h1>
+             <p ref={subRef} className="h-sub">
+@@ -279,7 +279,7 @@ export default function LandingClient() {
+               </div>
+               <div ref={stat2Ref} className="fs fs-b">
+                 <div className="fs-l">Completion Rate</div>
+-                <div className="fs-v">87% this week</div>
++                <div className="fs-v">97% this week</div>
+               </div>
+             </div>
+           </div>

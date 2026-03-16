@@ -131,14 +131,6 @@ export default function Sidebar() {
 
           {/* Bottom actions (Now sits naturally above safe area) */}
           <div className="mt-8 space-y-1 pt-4 border-t border-sidebar-border">
-            {/* Theme toggle */}
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-olive-light hover:bg-olive/10 transition-all"
-            >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-              {theme === "dark" ? "Light Mode" : "Dark Mode"}
-            </button>
             {/* Sign out */}
             <button
               onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
@@ -147,6 +139,16 @@ export default function Sidebar() {
               <LogOut size={16} />
               Sign Out
             </button>
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-muted hover:text-olive-light hover:bg-olive/10 transition-all"
+            >
+              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === "dark" ? "Light Mode" : "Dark Mode"}
+            </button>
+      
+            
           </div>
         </div>
       </aside>

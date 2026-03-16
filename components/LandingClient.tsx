@@ -208,7 +208,7 @@ export default function LandingClient() {
           .n-cta { font-size:0.78rem; padding:0.42rem 0.95rem; }
 
           .h { padding:2.5rem 5vw 1rem; }
-          .h-title { font-size:2.2rem; }
+          .h-title { font-size:1.6rem; }
           .h-sub { font-size:0.95rem; margin-bottom:1.75rem; }
           .h-ctas { flex-direction:column; align-items:stretch; gap:0.75rem; }
           .btn-p { width:100%; padding:1rem; font-size:1rem; }
@@ -257,12 +257,15 @@ export default function LandingClient() {
           <div>
             <div ref={badgeRef} className="h-badge">Discipline Builds Destiny</div>
             <h1 ref={h1Ref} className="h-title">
-              Build Habits That<br />
+              Build Unlimited Habits That<br />
               <span className="h-acc">Actually Stick</span>
             </h1>
             <p ref={subRef} className="h-sub">
               Track streaks, earn rewards, and unlock your best self — one disciplined day at a time.
             </p>
+            <div ref={mockupMobRef} className="h-vis-mob">
+          <Image src="/hero-image.jpg" alt="UrHabit dashboard" width={380} height={280} priority />
+        </div>
             <div ref={ctasRef} className="h-ctas">
               <Link href="/register" className="btn-p">Start for Free</Link>
               <Link href="/login" className="btn-g">I already have an account</Link>
@@ -272,23 +275,21 @@ export default function LandingClient() {
           {/* Desktop mockup */}
           <div className="h-vis">
             <div ref={mockupRef} className="h-mock">
-              <Image src="/hero-mockup.png" alt="UrHabit dashboard" width={480} height={350} priority className="h-img" />
+              <Image src="/hero-image.jpg" alt="UrHabit dashboard" width={280} height={380} priority className="h-img" />
               <div ref={stat1Ref} className="fs fs-t">
                 <div className="fs-l">Current Streak</div>
                 <div className="fs-v">21 days</div>
               </div>
               <div ref={stat2Ref} className="fs fs-b">
                 <div className="fs-l">Completion Rate</div>
-                <div className="fs-v">87% this week</div>
+                <div className="fs-v">97% this week</div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Mobile mockup — visible ≤900px */}
-        <div ref={mockupMobRef} className="h-vis-mob">
-          <Image src="/hero-mockup.png" alt="UrHabit dashboard" width={380} height={280} priority />
-        </div>
+        
 
         {/* ── FEATURES ── */}
         <section className="f">
