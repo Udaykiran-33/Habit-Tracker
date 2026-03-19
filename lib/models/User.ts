@@ -8,6 +8,7 @@ export interface IUser extends Document {
   xp: number;
   level: number;
   coins: number;
+  claimedAchievements: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -21,8 +22,12 @@ const UserSchema = new Schema<IUser>(
     xp: { type: Number, default: 0 },
     level: { type: Number, default: 1 },
     coins: { type: Number, default: 3 },
+    claimedAchievements: { type: [String], default: [] },
   },
   { timestamps: true }
 );
 
-export const User = models.User || model<IUser>("User", UserSchema);
+// Delete stale cached model so schema changes always take effect.
+// (Mongoose's `models.X || model(...)` pattern reuses old schemas in hot-reload dev environments)
+delete mongoose.models["User"];
+export const User = model<IUser>("User", UserSchema);

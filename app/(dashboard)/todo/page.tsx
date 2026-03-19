@@ -37,42 +37,66 @@ export default function TodoPage() {
     e.preventDefault();
     if (!task) return;
 
+    // Optimistically add to UI immediately
+    const tempId = `temp-${Date.now()}`;
+    const newTodo: Todo = { _id: tempId, task, time, completed: false };
+    setTodos((prev) => [newTodo, ...prev]);
+    const savedTask = task;
+    const savedTime = time;
+    setTask("");
+    setTime("");
+    toast.success("Task added!");
+
     setLoading(true);
     const res = await fetch("/api/todos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ task, time }),
+      body: JSON.stringify({ task: savedTask, time: savedTime }),
     });
 
     if (res.ok) {
-      setTask("");
-      setTime("");
-      fetchTodos();
-      toast.success("Task added!");
+      // Replace temp with real data from server
+      const data = await res.json();
+      setTodos((prev) =>
+        prev.map((t) => (t._id === tempId ? data.todo ?? { ...newTodo, _id: data._id ?? tempId } : t))
+      );
+    } else {
+      // Rollback on failure
+      setTodos((prev) => prev.filter((t) => t._id !== tempId));
+      toast.error("Failed to add task");
     }
     setLoading(false);
   };
 
   const handleToggle = async (id: string, completed: boolean) => {
+    // Optimistically toggle
+    setTodos((prev) =>
+      prev.map((t) => (t._id === id ? { ...t, completed: !completed } : t))
+    );
     const res = await fetch("/api/todos", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, completed: !completed }),
     });
-
-    if (res.ok) {
-      fetchTodos();
+    if (!res.ok) {
+      // Rollback on failure
+      setTodos((prev) =>
+        prev.map((t) => (t._id === id ? { ...t, completed } : t))
+      );
     }
   };
 
   const handleDelete = async (id: string) => {
+    // Optimistically remove
+    setTodos((prev) => prev.filter((t) => t._id !== id));
+    toast.success("Task deleted");
     const res = await fetch(`/api/todos/${id}`, {
       method: "DELETE",
     });
-
-    if (res.ok) {
+    if (!res.ok) {
+      // Rollback on failure
       fetchTodos();
-      toast.success("Task deleted");
+      toast.error("Failed to delete task");
     }
   };
 
@@ -184,7 +208,7 @@ export default function TodoPage() {
               </div>
               <button
                 onClick={() => handleDelete(todo._id)}
-                className="p-2.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all sm:-mr-2"
+                className="p-2.5 text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all sm:-mr-2 flex-shrink-0"
                 title="Delete task"
               >
                 <Trash2 size={20} />

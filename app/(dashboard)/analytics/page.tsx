@@ -401,41 +401,54 @@ export default function AnalyticsPage() {
 
       {/* Bottom row: 30-day trend + Category breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* 30-day trend */}
+        {/* Daily Completion – scrollable so every day is visible */}
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
           <h3 className="font-semibold text-foreground mb-1 text-sm">Daily Completion</h3>
-          <p className="text-[10px] text-dim mb-4">Habits completed per day since you joined</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={dailySince}>
-              <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
-              <XAxis
-                dataKey="date"
-                tick={{ fill: c.tick, fontSize: 10 }}
-                tickLine={false}
-                axisLine={false}
-                interval={Math.max(0, Math.floor(dailySince.length / 6) - 1)}
-              />
-              <YAxis
-                tick={{ fill: c.tick, fontSize: 11 }}
-                tickLine={false}
-                axisLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={tooltipStyle}
-                formatter={(value) => [`${value} habit${value !== 1 ? "s" : ""}`, "Completed"]}
-                labelFormatter={(label) => `${label}`}
-              />
-              <Line
-                type="monotone"
-                dataKey="completed"
-                stroke={c.olive}
-                strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <p className="text-[10px] text-dim mb-2">Habits completed per day since you joined · scroll ←</p>
+          {/* Outer wrapper: fixed height, scroll horizontally, newest data on the right */}
+          <div style={{ overflowX: "auto", overflowY: "hidden" }}>
+            {/* Inner div drives the width – 20 px per data point, min 300 px */}
+            <div style={{ width: Math.max(300, dailySince.length * 20), height: 220 }}>
+              <LineChart
+                width={Math.max(300, dailySince.length * 20)}
+                height={220}
+                data={dailySince}
+                margin={{ bottom: 30, right: 16, left: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fill: c.tick, fontSize: 10, angle: -45, textAnchor: "end", dy: 6 }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={Math.max(0, Math.ceil(dailySince.length / 10) - 1)}
+                  height={60}
+                />
+                <YAxis
+                  tick={{ fill: c.tick, fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                  width={28}
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  itemStyle={{ color: "#ffffff" }}
+                  cursor={false}
+                  formatter={(value) => [`${value} habit${value !== 1 ? "s" : ""}`, "Completed"]}
+                  labelFormatter={(label) => `${label}`}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="completed"
+                  stroke={c.olive}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
+                />
+              </LineChart>
+            </div>
+          </div>
         </div>
 
         {/* Category breakdown */}
@@ -459,6 +472,8 @@ export default function AnalyticsPage() {
                   paddingAngle={3}
                   dataKey="value"
                   stroke="none"
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  activeShape={(props: any) => <path d={props.d} fill={props.fill} />}
                 >
                   {pieData.map((entry, i) => (
                     <Cell key={i} fill={entry.fill} />
@@ -467,6 +482,7 @@ export default function AnalyticsPage() {
                 <Tooltip
                   contentStyle={tooltipStyle}
                   itemStyle={{ color: c.tooltipText }}
+                  cursor={false}
                   formatter={(value, name) => [
                     `${value} habit${value !== 1 ? "s" : ""}`,
                     name,
