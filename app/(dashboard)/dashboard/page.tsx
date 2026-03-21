@@ -15,15 +15,7 @@ import AddHabitModal from "@/components/habits/AddHabitModal";
 import CoinUsageModal from "@/components/ui/CoinUsageModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
 import { getTodayString, calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from "recharts";
+// recharts removed – using custom SVG rings
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import { useTheme } from "@/components/providers/ThemeProvider";
@@ -176,16 +168,11 @@ export default function DashboardPage() {
   const xpToNext = level * 100 - xp;
   const xpProgress = ((xp % 100) / 100) * 100;
 
-  // Theme-aware chart colors
-  const chartColors = {
-    tick: isDark ? "#888" : "#6B6560",
-    tooltipBg: isDark ? "#1c1c1c" : "#FFFFFF",
-    tooltipBorder: isDark ? "#2a2a2a" : "#E0D8CC",
-    tooltipText: isDark ? "#f5f5f5" : "#1a1a1a",
-    barInactive: isDark ? "#2a2a2a" : "#E0D8CC",
-    cursorFill: isDark ? "#1c1c1c" : "#F0EAE0",
-    olive: isDark ? "#6b8c3a" : "#5A7832",
-  };
+  // Ring chart helpers
+  const todayShort = new Date().toLocaleDateString("en-US", { weekday: "short" });
+  const ringTrack = isDark ? "#2a2a2a" : "#E0D8CC";
+  const ringFill = isDark ? "#6b8c3a" : "#5A7832";
+  const ringGlow = isDark ? "rgba(107,140,58,0.35)" : "rgba(90,120,50,0.25)";
 
   if (loading) {
     return (
@@ -330,50 +317,142 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Weekly Chart */}
+        {/* Weekly Ring Heatmap */}
         <div>
-          <h2 className="font-semibold text-sm sm:text-base text-foreground mb-3">Weekly Progress</h2>
-          <div className="bg-surface border border-border rounded-xl p-3 sm:p-4">
-            {stats?.weekly ? (
-              <ResponsiveContainer width="100%" height={170}>
-                <BarChart data={stats.weekly} barCategoryGap="25%">
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fill: chartColors.tick, fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      background: chartColors.tooltipBg,
-                      border: `1px solid ${chartColors.tooltipBorder}`,
-                      borderRadius: "8px",
-                      color: chartColors.tooltipText,
-                      fontSize: "11px",
-                    }}
-                    cursor={{ fill: chartColors.cursorFill }}
-                  />
-                  <Bar dataKey="completed" radius={[4, 4, 0, 0]}>
-                    {stats.weekly.map((entry, i) => (
-                      <Cell
-                        key={i}
-                        fill={entry.day === new Date().toLocaleDateString("en-US", { weekday: "short" })
-                          ? chartColors.olive
-                          : chartColors.barInactive}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-sm sm:text-base text-foreground">Weekly Progress</h2>
+            {stats?.weekly && (
+              <span className="text-[10px] sm:text-xs text-muted">
+                {stats.weekly.reduce((s, d) => s + d.completed, 0)}/
+                {stats.weekly.reduce((s, d) => s + d.total, 0)} this week
+              </span>
+            )}
+          </div>
+
+          <div className="bg-surface border border-border rounded-xl p-4">
+            {stats?.weekly ? (() => {
+              const R = 22, STROKE = 5;
+              const circ = 2 * Math.PI * R;
+              const weekTotal = stats.weekly.reduce((s, d) => s + d.total, 0);
+              const weekDone  = stats.weekly.reduce((s, d) => s + d.completed, 0);
+              const weekPct   = weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0;
+
+              return (
+                <>
+                  {/* Day rings row — horizontally scrollable */}
+                  <div
+                    className="flex items-end gap-3 mb-4 overflow-x-auto scroll-smooth pb-2"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {stats.weekly.map((entry) => {
+                      const isToday = entry.day === todayShort;
+                      // Clamp to exactly 1.0 to avoid floating-point gap at 100%
+                      const pct = entry.total > 0 ? Math.min(entry.completed / entry.total, 1) : 0;
+                      const isFull = pct >= 1;
+                      // When full use circ exactly so no gap; otherwise scale normally
+                      const dash = isFull ? circ : pct * circ;
+                      const isFullyDone = isFull && entry.total > 0;
+
+                      return (
+                        <div key={entry.day} className="flex flex-col items-center gap-1.5 flex-shrink-0" style={{ minWidth: 72 }}>
+                          {/* Ring */}
+                          <div
+                            className="relative"
+                            style={(isToday || isFullyDone) ? { filter: `drop-shadow(0 0 7px ${ringGlow})` } : {}}
+                          >
+                            <svg width={54} height={54} viewBox="0 0 54 54">
+                              {/* Track — hidden when full so ring color shows cleanly */}
+                              <circle
+                                cx={27} cy={27} r={R}
+                                fill="none"
+                                stroke={ringTrack}
+                                strokeWidth={STROKE}
+                              />
+                              {/* Fill arc */}
+                              <circle
+                                cx={27} cy={27} r={R}
+                                fill="none"
+                                stroke={isToday ? ringFill : (pct > 0 ? (isDark ? "#4a6a28" : "#7aac46") : ringTrack)}
+                                strokeWidth={STROKE}
+                                // Use "butt" when full — round caps on a closed loop create a double-dot artifact
+                                strokeLinecap={isFull ? "butt" : "round"}
+                                strokeDasharray={isFull ? `${circ} 0` : `${dash} ${circ}`}
+                                strokeDashoffset={circ * 0.25}
+                                style={{ transition: "stroke-dasharray 0.7s ease" }}
+                              />
+                              {/* Center text */}
+                              <text
+                                x={27} y={24}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize={pct === 0 ? 9 : 10}
+                                fontWeight="700"
+                                fill={isToday ? ringFill : (isDark ? "#aaa" : "#6B6560")}
+                                style={{ fontFamily: "inherit" }}
+                              >
+                                {entry.total > 0 ? `${entry.completed}` : "—"}
+                              </text>
+                              <text
+                                x={27} y={35}
+                                textAnchor="middle"
+                                dominantBaseline="middle"
+                                fontSize={8}
+                                fill={isDark ? "#555" : "#aaa"}
+                                style={{ fontFamily: "inherit" }}
+                              >
+                                {entry.total > 0 ? `/${entry.total}` : ""}
+                              </text>
+                            </svg>
+                            {/* Today dot */}
+                            {isToday && (
+                              <span
+                                className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full"
+                                style={{ backgroundColor: ringFill }}
+                              />
+                            )}
+                          </div>
+                          {/* Day label */}
+                          <span
+                            className="text-[9px] sm:text-[10px] font-medium"
+                            style={{ color: isToday ? ringFill : (isDark ? "#666" : "#9ca3af") }}
+                          >
+                            {entry.day}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Week-total summary bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-muted font-medium">Week completion</span>
+                      <span className="font-semibold" style={{ color: ringFill }}>{weekPct}%</span>
+                    </div>
+                    <div
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ background: ringTrack }}
+                    >
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{ width: `${weekPct}%`, background: `linear-gradient(90deg, ${ringFill}99, ${ringFill})` }}
                       />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
+                    </div>
+                    <div className="flex justify-between text-[9px] text-muted mt-0.5">
+                      <span>{weekDone} completed</span>
+                      <span>{weekTotal - weekDone} remaining</span>
+                    </div>
+                  </div>
+                </>
+              );
+            })() : (
               <div className="h-[170px] flex items-center justify-center text-muted text-sm">
                 No data yet
               </div>
             )}
           </div>
 
-          {/* Streak leaderboard */}
+          {/* Active Streaks */}
           {habits.filter((h) => h.streak > 0).length > 0 && (
             <div className="mt-3 sm:mt-4 bg-surface border border-border rounded-xl p-3 sm:p-4">
               <h3 className="text-xs sm:text-sm font-medium text-foreground mb-2 sm:mb-3">Active Streaks</h3>
