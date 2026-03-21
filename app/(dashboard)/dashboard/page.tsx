@@ -8,6 +8,9 @@ import {
   Target,
   TrendingUp,
   Plus,
+  Coins,
+  Trophy,
+  Check,
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
 import HabitCard from "@/components/habits/HabitCard";
@@ -108,10 +111,10 @@ export default function DashboardPage() {
       if (data.completed) {
         if (data.rewards && data.rewards.length > 0) {
           data.rewards.forEach((reward: string) => {
-            toast.success(`🎉 ${reward}`, { duration: 3000 });
+            toast.success(reward, { duration: 3000, icon: <Trophy size={16} className="text-yellow-400" /> });
           });
         } else {
-          toast.success("✓ +10 XP", { duration: 1000 });
+          toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
         }
       } else {
         toast("Unmarked", {duration: 1000 });
@@ -219,7 +222,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between gap-3 mb-4 sm:mb-6">
         <div className="min-w-0">
           <h1 className="text-lg sm:text-2xl font-bold text-foreground truncate">
-            Hi, {session?.user?.name?.split(" ")[0] ?? "there"} 👋
+            Hi, {session?.user?.name?.split(" ")[0] ?? "there"}
           </h1>
           <p className="text-muted text-xs sm:text-sm mt-0.5">
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
@@ -227,8 +230,8 @@ export default function DashboardPage() {
         </div>
         <div className="flex items-center gap-3">
           {stats !== null && (
-            <div className="flex items-center bg-surface border border-border px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
-              <span className="mr-1.5" role="img" aria-label="coin">🪙</span>
+            <div className="flex items-center bg-surface border border-border px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium text-foreground whitespace-nowrap gap-1.5">
+              <Coins size={14} className="text-yellow-500" />
               <span>{stats.coins} U</span>
             </div>
           )}
@@ -467,7 +470,9 @@ export default function DashboardPage() {
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: h.color }} />
                         <span className="text-xs sm:text-sm text-muted truncate">{h.name}</span>
                       </div>
-                      <span className="text-[10px] sm:text-xs font-semibold text-orange-400 flex-shrink-0 ml-2">{h.streak}d 🔥</span>
+                      <span className="flex items-center gap-1 text-[10px] sm:text-xs font-semibold text-orange-400 flex-shrink-0 ml-2">
+                          {h.streak}d <Flame size={11} className="text-orange-400" />
+                        </span>
                     </div>
                   ))}
               </div>

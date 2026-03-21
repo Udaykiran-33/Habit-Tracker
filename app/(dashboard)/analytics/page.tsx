@@ -7,8 +7,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   CartesianGrid,
   Cell,
   PieChart,
@@ -16,7 +16,7 @@ import {
   Legend,
 } from "recharts";
 import { calculateStreak, getTodayString } from "@/lib/utils";
-import { TrendingUp, Flame, Target, Calendar, RefreshCw } from "lucide-react";
+import { TrendingUp, Flame, Target, Calendar, RefreshCw, Activity } from "lucide-react";
 import { useTheme } from "@/components/providers/ThemeProvider";
 
 interface Habit {
@@ -401,21 +401,37 @@ export default function AnalyticsPage() {
 
       {/* Bottom row: 30-day trend + Category breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Daily Completion – scrollable so every day is visible */}
+        {/* Daily Completion – Area chart with gradient fill */}
         <div className="bg-surface border border-border rounded-xl p-4 sm:p-5">
-          <h3 className="font-semibold text-foreground mb-1 text-sm">Daily Completion</h3>
-          <p className="text-[10px] text-dim mb-2">Habits completed per day since you joined · scroll ←</p>
-          {/* Outer wrapper: fixed height, scroll horizontally, newest data on the right */}
-          <div style={{ overflowX: "auto", overflowY: "hidden" }}>
-            {/* Inner div drives the width – 20 px per data point, min 300 px */}
-            <div style={{ width: Math.max(300, dailySince.length * 20), height: 220 }}>
-              <LineChart
-                width={Math.max(300, dailySince.length * 20)}
-                height={220}
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                
+                <h3 className="font-semibold text-foreground text-sm">Daily Completion</h3>
+                {/* Live badge */}
+                
+              </div>
+              
+            </div>
+            <span className="text-[10px] text-muted">{dailySince.length}d tracked</span>
+          </div>
+
+          {/* Scrollable chart area */}
+          <div style={{ overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none" }}>
+            <div style={{ width: Math.max(300, dailySince.length * 22), height: 200 }}>
+              <AreaChart
+                width={Math.max(300, dailySince.length * 22)}
+                height={200}
                 data={dailySince}
-                margin={{ bottom: 30, right: 16, left: 0 }}
+                margin={{ bottom: 32, right: 16, left: 0, top: 8 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke={c.grid} />
+                <defs>
+                  <linearGradient id="completionGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={c.olive} stopOpacity={0.35} />
+                    <stop offset="100%" stopColor={c.olive} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={c.grid} vertical={false} />
                 <XAxis
                   dataKey="date"
                   tick={{ fill: c.tick, fontSize: 10, angle: -45, textAnchor: "end", dy: 6 }}
@@ -429,24 +445,50 @@ export default function AnalyticsPage() {
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
-                  width={28}
+                  width={24}
                 />
                 <Tooltip
-                  contentStyle={tooltipStyle}
-                  itemStyle={{ color: "#ffffff" }}
-                  cursor={false}
-                  formatter={(value) => [`${value} habit${value !== 1 ? "s" : ""}`, "Completed"]}
-                  labelFormatter={(label) => `${label}`}
+                  cursor={{ stroke: c.olive, strokeWidth: 1, strokeDasharray: "4 2" }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const completed = payload[0]?.value as number;
+                    const total = (payload[0]?.payload as { total: number })?.total ?? 0;
+                    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    return (
+                      <div
+                        style={{
+                          background: isDark ? "#1c1c1c" : "#fff",
+                          border: `1px solid ${isDark ? "#2a2a2a" : "#E0D8CC"}`,
+                          borderRadius: 10,
+                          padding: "10px 14px",
+                          minWidth: 140,
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                        }}
+                      >
+                        <p style={{ color: isDark ? "#aaa" : "#666", fontSize: 11, marginBottom: 6, fontWeight: 600 }}>{label}</p>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                          <span style={{ fontSize: 22, fontWeight: 800, color: c.olive, lineHeight: 1 }}>{completed}</span>
+                          <span style={{ fontSize: 11, color: isDark ? "#666" : "#aaa" }}>/ {total} habits</span>
+                        </div>
+                        {/* Mini progress bar */}
+                        <div style={{ marginTop: 8, height: 4, background: isDark ? "#2a2a2a" : "#e5e7eb", borderRadius: 99 }}>
+                          <div style={{ width: `${pct}%`, height: "100%", background: c.olive, borderRadius: 99, transition: "width 0.3s" }} />
+                        </div>
+                        <p style={{ fontSize: 10, color: c.olive, marginTop: 4, fontWeight: 600 }}>{pct}% done</p>
+                      </div>
+                    );
+                  }}
                 />
-                <Line
+                <Area
                   type="monotone"
                   dataKey="completed"
                   stroke={c.olive}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
+                  fill="url(#completionGrad)"
                   dot={false}
-                  activeDot={{ r: 4, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: c.oliveLight, stroke: c.olive, strokeWidth: 2.5 }}
                 />
-              </LineChart>
+              </AreaChart>
             </div>
           </div>
         </div>
