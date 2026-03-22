@@ -153,7 +153,7 @@ export default function TodoPage() {
               className="flex-1 sm:flex-none sm:w-[150px]"
             />
             <Button type="submit" loading={loading} className="px-4 sm:px-6 whitespace-nowrap h-10 flex-shrink-0">
-              <Plus size={18} className="mr-1.5" />
+              <Plus size={18} className="mr-1" />
               Add
             </Button>
           </div>

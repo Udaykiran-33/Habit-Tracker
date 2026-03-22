@@ -459,8 +459,8 @@ export default function AnalyticsPage() {
                         style={{
                           background: isDark ? "#1c1c1c" : "#fff",
                           border: `1px solid ${isDark ? "#2a2a2a" : "#E0D8CC"}`,
-                          borderRadius: 8,
-                          padding: "7px 10px",
+                          borderRadius: 10,
+                          padding: "10px 14px",
                           minWidth: 110,
                           boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
                         }}
