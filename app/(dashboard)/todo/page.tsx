@@ -150,7 +150,7 @@ export default function TodoPage() {
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="flex-1 sm:flex-none sm:w-[150px]"
+              className="min-w-[140px] flex-1 sm:flex-none sm:w-[140px]"
             />
             <Button type="submit" loading={loading} className="px-4 sm:px-6 whitespace-nowrap h-10 flex-shrink-0">
               <Plus size={18} className="mr-1" />
