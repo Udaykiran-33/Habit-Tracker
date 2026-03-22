@@ -81,7 +81,10 @@ export default function AddHabitModal({
           label="Habit Name"
           placeholder="e.g. Morning run, Read 20 pages…"
           value={form.name}
-          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          onChange={(e) => {
+            const v = e.target.value;
+            setForm((f) => ({ ...f, name: v.charAt(0).toUpperCase() + v.slice(1) }));
+          }}
           autoFocus
         />
 

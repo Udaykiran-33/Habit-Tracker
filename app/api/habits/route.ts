@@ -44,12 +44,15 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name, category, frequency, color, icon } =
+    const { name: rawName, category, frequency, color, icon } =
       await req.json();
 
-    if (!name) {
+    if (!rawName) {
       return NextResponse.json({ error: "Habit name is required" }, { status: 400 });
     }
+
+    // Capitalize first letter
+    const name = rawName.trim().charAt(0).toUpperCase() + rawName.trim().slice(1);
 
     await connectDB();
 
