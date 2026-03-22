@@ -459,22 +459,22 @@ export default function AnalyticsPage() {
                         style={{
                           background: isDark ? "#1c1c1c" : "#fff",
                           border: `1px solid ${isDark ? "#2a2a2a" : "#E0D8CC"}`,
-                          borderRadius: 10,
-                          padding: "10px 14px",
-                          minWidth: 140,
-                          boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                          borderRadius: 8,
+                          padding: "7px 10px",
+                          minWidth: 110,
+                          boxShadow: "0 2px 12px rgba(0,0,0,0.18)",
                         }}
                       >
-                        <p style={{ color: isDark ? "#aaa" : "#666", fontSize: 11, marginBottom: 6, fontWeight: 600 }}>{label}</p>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                          <span style={{ fontSize: 22, fontWeight: 800, color: c.olive, lineHeight: 1 }}>{completed}</span>
-                          <span style={{ fontSize: 11, color: isDark ? "#666" : "#aaa" }}>/ {total} habits</span>
+                        <p style={{ color: isDark ? "#aaa" : "#666", fontSize: 10, marginBottom: 4, fontWeight: 600 }}>{label}</p>
+                        <div style={{ display: "flex", alignItems: "baseline", gap: 3 }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: c.olive, lineHeight: 1 }}>{completed}</span>
+                          <span style={{ fontSize: 10, color: isDark ? "#666" : "#aaa" }}>/ {total} habits</span>
                         </div>
                         {/* Mini progress bar */}
-                        <div style={{ marginTop: 8, height: 4, background: isDark ? "#2a2a2a" : "#e5e7eb", borderRadius: 99 }}>
+                        <div style={{ marginTop: 5, height: 3, background: isDark ? "#2a2a2a" : "#e5e7eb", borderRadius: 99 }}>
                           <div style={{ width: `${pct}%`, height: "100%", background: c.olive, borderRadius: 99, transition: "width 0.3s" }} />
                         </div>
-                        <p style={{ fontSize: 10, color: c.olive, marginTop: 4, fontWeight: 600 }}>{pct}% done</p>
+                        <p style={{ fontSize: 10, color: c.olive, marginTop: 3, fontWeight: 600 }}>{pct}% done</p>
                       </div>
                     );
                   }}

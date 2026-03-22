@@ -138,22 +138,22 @@ export default function TodoPage() {
       </div>
 
       <form onSubmit={handleAddTodo} className="bg-surface border border-border rounded-2xl p-4 sm:p-6 mb-8 shadow-sm">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3">
           <Input
             placeholder="What needs to be done?"
             value={task}
             onChange={(e) => setTask(e.target.value)}
-            className="flex-1"
+            className="w-full"
           />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              className="w-[130px] sm:w-[150px]"
+              className="flex-1 sm:flex-none sm:w-[150px]"
             />
-            <Button type="submit" loading={loading} className="px-5 sm:px-6 whitespace-nowrap h-10">
-              <Plus size={18} className="mr-1.5 sm:mr-2" />
+            <Button type="submit" loading={loading} className="px-4 sm:px-6 whitespace-nowrap h-10 flex-shrink-0">
+              <Plus size={18} className="mr-1.5" />
               Add
             </Button>
           </div>
