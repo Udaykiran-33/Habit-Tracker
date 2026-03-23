@@ -47,50 +47,64 @@ export function calculateStreak(completions: string[], frequency: string = "Dail
   }
   
   // Weekly or 3x per week logic
-  // Group completions by week (Monday-based)
-  const getWeekId = (date: Date) => {
+  // All date arithmetic is done in UTC to match how completion dates are stored
+  // (getTodayString uses toISOString which gives UTC dates)
+  const getWeekId = (date: Date): string => {
+    const day = date.getUTCDay(); // 0=Sun … 6=Sat
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Monday
-    const monday = new Date(d.setDate(diff));
-    return monday.toISOString().split("T")[0];
+    // Shift to Monday of that week
+    d.setUTCDate(d.getUTCDate() - day + (day === 0 ? -6 : 1));
+    d.setUTCHours(0, 0, 0, 0);
+    return d.toISOString().split("T")[0];
   };
 
+  // Build week → count map from all completion dates
   const completionsByWeek: Record<string, number> = {};
   for (const dateStr of sorted) {
-    const wid = getWeekId(new Date(dateStr));
+    // Parse as UTC midnight to match storage format
+    const wid = getWeekId(new Date(dateStr + "T00:00:00Z"));
     completionsByWeek[wid] = (completionsByWeek[wid] || 0) + 1;
   }
 
   const targetCount = frequency === "3x per week" ? 3 : 1;
-  const currentWeekId = getWeekId(today);
-  const lastWeekDate = new Date(today);
-  lastWeekDate.setDate(lastWeekDate.getDate() - 7);
-  const lastWeekId = getWeekId(lastWeekDate);
 
-  // Still active if requirement met this week or last week
-  if ((completionsByWeek[currentWeekId] || 0) < targetCount && (completionsByWeek[lastWeekId] || 0) < targetCount) {
+  // Today's UTC date string and its week Monday
+  const todayUtc = new Date(getTodayString() + "T00:00:00Z");
+  const currentWeekId = getWeekId(todayUtc);
+
+  // Previous week = 7 days before the Monday of the current week (always exact)
+  const prevMonday = new Date(currentWeekId + "T00:00:00Z");
+  prevMonday.setUTCDate(prevMonday.getUTCDate() - 7);
+  const lastWeekId = prevMonday.toISOString().split("T")[0];
+
+  // Streak is alive if the requirement was met this week OR last week
+  // (gives a full week of grace before the streak dies)
+  if (
+    (completionsByWeek[currentWeekId] || 0) < targetCount &&
+    (completionsByWeek[lastWeekId] || 0) < targetCount
+  ) {
     return 0;
   }
 
+  // Walk backwards week by week counting consecutive qualifying weeks
   let streak = 0;
-  let checkDate = new Date(currentWeekId);
-  
-  // If haven't met target this week, start checking from last week
-  if ((completionsByWeek[currentWeekId] || 0) < targetCount) {
-    checkDate = new Date(lastWeekId);
-  }
+  // If this week's target isn't yet met, start counting from last week
+  let checkDate = new Date(
+    (completionsByWeek[currentWeekId] || 0) >= targetCount
+      ? currentWeekId + "T00:00:00Z"
+      : lastWeekId + "T00:00:00Z"
+  );
 
   while (true) {
     const wid = checkDate.toISOString().split("T")[0];
     if ((completionsByWeek[wid] || 0) >= targetCount) {
       streak++;
-      checkDate.setDate(checkDate.getDate() - 7);
+      checkDate.setUTCDate(checkDate.getUTCDate() - 7);
     } else {
       break;
     }
   }
-  
+
   return streak;
 }
 
