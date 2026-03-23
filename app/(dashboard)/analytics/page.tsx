@@ -24,6 +24,7 @@ interface Habit {
   name: string;
   category: string;
   color: string;
+  createdAt: string;
   completions: { date: string }[];
 }
 
@@ -90,11 +91,15 @@ export default function AnalyticsPage() {
     const completed = habits.filter((h) =>
       h.completions.some((c) => c.date === dateStr)
     ).length;
+    const total = habits.filter((h) => {
+      if (!h.createdAt) return true;
+      return h.createdAt.split("T")[0] <= dateStr;
+    }).length;
     return {
       date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
       fullDate: dateStr,
       completed,
-      total: habits.length,
+      total,
     };
   }).filter(Boolean) as { date: string; fullDate: string; completed: number; total: number }[];
   // Last 12 weeks
@@ -106,7 +111,14 @@ export default function AnalyticsPage() {
       day.setDate(weekEnd.getDate() - (6 - d));
       return day.toISOString().split("T")[0];
     });
-    const totalPossible = habits.length * 7;
+    
+    const totalPossible = weekDates.reduce((sum, dateStr) => {
+      return sum + habits.filter((h) => {
+        if (!h.createdAt) return true;
+        return h.createdAt.split("T")[0] <= dateStr;
+      }).length;
+    }, 0);
+
     const completions = habits.reduce((sum, h) => {
       return sum + weekDates.filter((d) => h.completions.some((c) => c.date === d)).length;
     }, 0);
@@ -178,12 +190,17 @@ export default function AnalyticsPage() {
     const completedCount = habits.filter((h) =>
       h.completions.some((c) => c.date === dateStr)
     ).length;
-    const totalHabits = habits.length;
+    
+    const totalHabits = habits.filter((h) => {
+      if (!h.createdAt) return true;
+      return h.createdAt.split("T")[0] <= dateStr;
+    }).length;
+
     const isToday = dateStr === today;
     const isPast = dateStr <= today;
     let status: "none" | "partial" | "all" = "none";
     if (isPast && totalHabits > 0) {
-      if (completedCount === totalHabits) status = "all";
+      if (completedCount >= totalHabits) status = "all";
       else if (completedCount > 0) status = "partial";
     }
     return { day, dateStr, status, completedCount, totalHabits, isToday };

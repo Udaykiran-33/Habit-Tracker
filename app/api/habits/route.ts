@@ -29,6 +29,7 @@ export async function GET() {
   const habitsWithCompletions = habits.map((h) => ({
     ...h,
     id: h._id.toString(),
+    createdAt: h.createdAt ? new Date(h.createdAt).toISOString() : new Date().toISOString(),
     completions: completions
       .filter((c) => c.habitId === h._id.toString())
       .map((c) => ({ date: c.date })),

@@ -68,11 +68,18 @@ export async function GET() {
       : habits.filter((h) =>
           groupedCompletions[h._id.toString()]?.includes(dateStr)
         ).length;
+
+    // Calculate how many habits existed on this specific day
+    const habitsExistedOnDay = habits.filter((h) => {
+      const createdAtStr = new Date(h.createdAt).toISOString().split("T")[0];
+      return createdAtStr <= dateStr;
+    }).length;
+
     return {
       day: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
       date: dateStr,
       completed: count,
-      total: isFuture ? 0 : totalHabits,       // future days show 0/0 (ring empty)
+      total: isFuture ? 0 : habitsExistedOnDay, // only count habits that existed then
     };
   });
 
