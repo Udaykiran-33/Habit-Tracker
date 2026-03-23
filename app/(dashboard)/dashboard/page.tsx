@@ -323,12 +323,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold text-sm sm:text-base text-foreground">Weekly Progress</h2>
-            {stats?.weekly && (
-              <span className="text-[10px] sm:text-xs text-muted">
-                {stats.weekly.reduce((s, d) => s + d.completed, 0)}/
-                {stats.weekly.reduce((s, d) => s + d.total, 0)} this week
-              </span>
-            )}
+            
           </div>
 
           <div className="bg-surface border border-border rounded-xl p-4">
@@ -374,7 +369,7 @@ export default function DashboardPage() {
                               <circle
                                 cx={27} cy={27} r={R}
                                 fill="none"
-                                stroke={isToday ? ringFill : (pct > 0 ? (isDark ? "#4a6a28" : "#7aac46") : ringTrack)}
+                                stroke={pct > 0 ? ringFill : ringTrack}
                                 strokeWidth={STROKE}
                                 // Use "butt" when full — round caps on a closed loop create a double-dot artifact
                                 strokeLinecap={isFull ? "butt" : "round"}
@@ -428,7 +423,7 @@ export default function DashboardPage() {
                   {/* Week-total summary bar */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-muted font-medium">Week completion</span>
+                      <span className="text-muted font-medium">Day completion</span>
                       <span className="font-semibold" style={{ color: ringFill }}>{weekPct}%</span>
                     </div>
                     <div

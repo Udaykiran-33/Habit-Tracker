@@ -50,19 +50,29 @@ export async function GET() {
   const successRate =
     totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
 
-  // Weekly data (last 7 days)
+  // Weekly data: Monday-based ISO week (Mon–Sun), UTC-consistent
+  // Find Monday of the current UTC week
+  const todayUtcMs = new Date(today + "T00:00:00Z");
+  const utcDay = todayUtcMs.getUTCDay(); // 0=Sun … 6=Sat
+  const daysFromMonday = utcDay === 0 ? 6 : utcDay - 1; // Mon=0 … Sun=6
+  const monday = new Date(todayUtcMs);
+  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
+
   const weekly = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    const d = new Date(monday);
+    d.setUTCDate(d.getUTCDate() + i);          // Mon+0, Mon+1, … Mon+6
     const dateStr = d.toISOString().split("T")[0];
-    const count = habits.filter((h) =>
-      groupedCompletions[h._id.toString()]?.includes(dateStr)
-    ).length;
+    const isFuture = dateStr > today;           // don't count days not yet reached
+    const count = isFuture
+      ? 0
+      : habits.filter((h) =>
+          groupedCompletions[h._id.toString()]?.includes(dateStr)
+        ).length;
     return {
-      day: d.toLocaleDateString("en-US", { weekday: "short" }),
+      day: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
       date: dateStr,
       completed: count,
-      total: totalHabits,
+      total: isFuture ? 0 : totalHabits,       // future days show 0/0 (ring empty)
     };
   });
 
