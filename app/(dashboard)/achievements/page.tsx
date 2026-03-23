@@ -5,8 +5,7 @@ import {
 } from "@/lib/utils";
 import {
   Leaf, Flame, Zap, Trophy, Hammer, Rocket, Crown,
-  Sprout, Star, Footprints, LayoutList, Settings2,
-  TrendingUp, Target, Gem, Lock, Coins, CheckCircle2,
+  Lock, Coins, CheckCircle2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -146,92 +145,10 @@ export default function AchievementsPage() {
       target: 500,
       unlocked: totalCompletions >= 500,
     },
-    // ── Milestone achievements (no coin, just progress) ──
-    {
-      id: "streak_3",
-      title: "Getting Started",
-      description: "Maintain a 3-day streak on any habit",
-      Icon: Sprout,
-      type: "bronze",
-      progress: Math.min(bestStreak, 3),
-      target: 3,
-      unlocked: bestStreak >= 3,
-    },
-    {
-      id: "streak_7",
-      title: "One Week Wonder",
-      description: "Maintain a 7-day streak on any habit",
-      Icon: Star,
-      type: "bronze",
-      progress: Math.min(bestStreak, 7),
-      target: 7,
-      unlocked: bestStreak >= 7,
-    },
-    {
-      id: "comp_10",
-      title: "First Steps",
-      description: "Complete 10 habits total",
-      Icon: Footprints,
-      type: "bronze",
-      progress: Math.min(totalCompletions, 10),
-      target: 10,
-      unlocked: totalCompletions >= 10,
-    },
-    {
-      id: "habits_3",
-      title: "Habit Collector",
-      description: "Create 3 different habits",
-      Icon: LayoutList,
-      type: "bronze",
-      progress: Math.min(habits.length, 3),
-      target: 3,
-      unlocked: habits.length >= 3,
-    },
-    {
-      id: "habits_5",
-      title: "System Builder",
-      description: "Create 5 different habits",
-      Icon: Settings2,
-      type: "silver",
-      progress: Math.min(habits.length, 5),
-      target: 5,
-      unlocked: habits.length >= 5,
-    },
-    {
-      id: "level_5",
-      title: "Consistent",
-      description: "Reach Level 5",
-      Icon: TrendingUp,
-      type: "silver",
-      progress: Math.min(level, 5),
-      target: 5,
-      unlocked: level >= 5,
-    },
-    {
-      id: "level_10",
-      title: "Discipline Master",
-      description: "Reach Level 10",
-      Icon: Target,
-      type: "gold",
-      progress: Math.min(level, 10),
-      target: 10,
-      unlocked: level >= 10,
-    },
-    {
-      id: "xp_500",
-      title: "XP Grinder",
-      description: "Earn 500 total XP",
-      Icon: Gem,
-      type: "special",
-      progress: Math.min(xp, 500),
-      target: 500,
-      unlocked: xp >= 500,
-    },
   ];
 
   const unlocked = achievements.filter((a) => a.unlocked).length;
   const coinAchievements = achievements.filter((a) => !!a.coinReward);
-  const otherAchievements = achievements.filter((a) => !a.coinReward);
 
   const typeColors: Record<string, { border: string; text: string; iconBg: string }> = {
     bronze:  { border: "border-orange-700/40", text: "text-orange-400",  iconBg: "bg-orange-500/15" },
@@ -428,67 +345,6 @@ export default function AchievementsPage() {
         </div>
       </div>
 
-      {/* Milestones Section */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Trophy size={15} className="text-yellow-400" />
-          <h2 className="font-bold text-foreground text-sm">Milestones</h2>
-        </div>
-        <p className="text-xs text-muted mb-4">Track your overall progress</p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {otherAchievements.map((a) => {
-            const tc = typeColors[a.type];
-            const progressPct = Math.min(100, (a.progress / a.target) * 100);
-            return (
-              <div
-                key={a.id}
-                className={cn(
-                  "rounded-xl border p-4 transition-all",
-                  a.unlocked ? tc.border : "border-border opacity-60"
-                )}
-                style={{ backgroundColor: a.unlocked ? "var(--olive-bg)" : "var(--surface)" }}
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <div className={cn("p-2 rounded-lg flex-shrink-0", a.unlocked ? tc.iconBg : "bg-surface-2")}>
-                    {a.unlocked
-                      ? <a.Icon size={20} className={tc.text} />
-                      : <Lock size={20} className="text-dim" />
-                    }
-                  </div>
-                  <span className={cn(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full border",
-                    a.unlocked ? `${tc.text} border-current bg-current/10` : "text-dim border-border"
-                  )}>
-                    {a.type.toUpperCase()}
-                  </span>
-                </div>
-                <h3 className={cn("font-semibold text-sm mb-1", a.unlocked ? "text-foreground" : "text-dim")}>
-                  {a.title}
-                </h3>
-                <p className="text-xs text-muted leading-relaxed mb-3">{a.description}</p>
-
-                {!a.unlocked && (
-                  <div>
-                    <div className="flex items-center justify-between text-xs text-dim mb-1">
-                      <span>{a.progress}</span>
-                      <span>{a.target}</span>
-                    </div>
-                    <div className="h-1 bg-border rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-olive" style={{ width: `${progressPct}%` }} />
-                    </div>
-                  </div>
-                )}
-
-                {a.unlocked && (
-                  <div className={`text-xs font-medium ${tc.text} flex items-center gap-1`}>
-                    <CheckCircle2 size={13} /> Unlocked
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

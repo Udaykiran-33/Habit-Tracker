@@ -9,6 +9,8 @@ export interface IUser extends Document {
   level: number;
   coins: number;
   claimedAchievements: string[];
+  claimedStreakMilestones: string[];
+  claimedCompletionMilestones: number[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,6 +25,8 @@ const UserSchema = new Schema<IUser>(
     level: { type: Number, default: 1 },
     coins: { type: Number, default: 3 },
     claimedAchievements: { type: [String], default: [] },
+    claimedStreakMilestones: { type: [String], default: [] },
+    claimedCompletionMilestones: { type: [Number], default: [] },
   },
   { timestamps: true }
 );

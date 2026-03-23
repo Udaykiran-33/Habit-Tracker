@@ -9,7 +9,6 @@ import {
   TrendingUp,
   Plus,
   Coins,
-  Trophy,
   Check,
 } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
@@ -17,6 +16,7 @@ import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
 import CoinUsageModal from "@/components/ui/CoinUsageModal";
 import ConfirmModal from "@/components/ui/ConfirmModal";
+import LevelUpModal from "@/components/ui/LevelUpModal";
 import { getTodayString, calculateStreak, getLevel, getLevelTitle } from "@/lib/utils";
 // recharts removed – using custom SVG rings
 import Button from "@/components/ui/Button";
@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [levelUpModal, setLevelUpModal] = useState<{ open: boolean; level: number }>({ open: false, level: 1 });
   const today = getTodayString();
 
   const isDark = theme === "dark";
@@ -109,15 +110,13 @@ export default function DashboardPage() {
       // Silent background sync to get accurate stats/streak
       fetchData();
       if (data.completed) {
-        if (data.rewards && data.rewards.length > 0) {
-          data.rewards.forEach((reward: string) => {
-            toast.success(reward, { duration: 3000, icon: <Trophy size={16} className="text-yellow-400" /> });
-          });
+        if (data.leveledUp) {
+          setLevelUpModal({ open: true, level: data.newLevel });
         } else {
           toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
         }
       } else {
-        toast("Unmarked", {duration: 1000 });
+        toast("Unmarked", { duration: 1000 });
       }
     } else {
       // Revert optimistic update on failure
@@ -501,6 +500,12 @@ export default function DashboardPage() {
         message="Are you sure you want to delete this habit? This action cannot be undone and your progress will be lost."
         confirmText="Confirm"
         cancelText="Back"
+      />
+
+      <LevelUpModal
+        isOpen={levelUpModal.open}
+        newLevel={levelUpModal.level}
+        onClose={() => setLevelUpModal({ open: false, level: levelUpModal.level })}
       />
     </div>
   );
