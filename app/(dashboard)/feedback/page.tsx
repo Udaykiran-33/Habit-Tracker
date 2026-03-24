@@ -299,16 +299,14 @@ export default function FeedbackPage() {
                 <div className="w-16 h-16 rounded-full flex items-center justify-center transition-colors" style={{ backgroundColor: "color-mix(in srgb, var(--olive-mid) 20%, transparent)" }}>
                   <CheckCircle2 size={32} className="transition-colors" style={{ color: "var(--olive-light)" }} />
                 </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center animate-bounce transition-colors" style={{ backgroundColor: "color-mix(in srgb, #e2a63d 20%, transparent)" }}>
-                  <Sparkles size={12} style={{ color: "#e2a63d" }} />
-                </div>
+                
               </div>
             </div>
 
             {/* Text */}
             <div className="text-center">
               <h3 className="text-lg font-bold mb-2 transition-colors" style={{ color: "var(--foreground)" }}>
-                Thank You! 🎉
+                Thank You! 
               </h3>
               <p className="text-sm leading-relaxed mb-1 transition-colors" style={{ color: "var(--muted)" }}>
                 We truly appreciate your interest in making UrHabit better.
@@ -320,8 +318,8 @@ export default function FeedbackPage() {
             </div>
 
             {/* Heart accent */}
-            <div className="flex items-center justify-center gap-1.5 mt-4 text-xs transition-colors" style={{ color: "var(--olive-mid)" }}>
-              <Heart size={12} className="transition-colors" style={{ fill: "var(--olive-mid)" }} />
+            <div className="flex items-center justify-center gap-1.5 mt-4 text-xl transition-colors" style={{ color: "var(--olive-mid)" }}>
+              <Heart size={18} className="transition-colors" style={{ fill: "var(--olive-mid)" }} />
               <span>Your voice shapes UrHabit</span>
             </div>
 

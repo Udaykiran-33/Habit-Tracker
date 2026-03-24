@@ -9,7 +9,6 @@ import toast from "react-hot-toast";
 interface HabitFormData {
   name: string;
   category: string;
-  frequency: string;
   color: string;
 }
 
@@ -24,8 +23,6 @@ interface AddHabitModalProps {
   editHabit?: Habit | null;
 }
 
-const FREQUENCIES = ["Daily", "Weekly", "3x per week"];
-
 export default function AddHabitModal({
   isOpen,
   onClose,
@@ -35,7 +32,6 @@ export default function AddHabitModal({
   const [form, setForm] = useState<HabitFormData>({
     name: "",
     category: "General",
-    frequency: "Daily",
     color: "#6b8c3a",
   });
   const [loading, setLoading] = useState(false);
@@ -45,11 +41,10 @@ export default function AddHabitModal({
       setForm({
         name: editHabit.name,
         category: editHabit.category,
-        frequency: editHabit.frequency,
         color: editHabit.color,
       });
     } else {
-      setForm({ name: "", category: "General", frequency: "Daily", color: "#6b8c3a" });
+      setForm({ name: "", category: "General", color: "#6b8c3a" });
     }
   }, [editHabit, isOpen]);
 
@@ -105,26 +100,6 @@ export default function AddHabitModal({
         </div>
 
         {/* Frequency */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-foreground">Frequency</label>
-          <div className="flex flex-wrap gap-2">
-            {FREQUENCIES.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setForm((s) => ({ ...s, frequency: f }))}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                  form.frequency === f
-                    ? "bg-olive/20 border-olive text-olive-light"
-                    : "bg-surface-2 border-border text-muted hover:border-border-hover"
-                )}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
 
 
         <div className="flex gap-3 pt-2">

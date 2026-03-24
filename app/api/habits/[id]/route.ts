@@ -29,7 +29,6 @@ export async function PUT(
         $set: {
           name: data.name,
           category: data.category,
-          frequency: data.frequency,
           color: data.color,
           icon: data.icon,
         },

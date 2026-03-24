@@ -16,7 +16,6 @@ interface Habit {
   id: string;
   name: string;
   category: string;
-  frequency: string;
   color: string;
   completions: { date: string }[];
   streak: number;
@@ -89,7 +88,6 @@ export default function HabitCard({
         </p>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
           <Badge label={habit.category} variant="gray" />
-          <span className="text-[10px] sm:text-xs text-dim">{habit.frequency}</span>
         </div>
       </div>
 

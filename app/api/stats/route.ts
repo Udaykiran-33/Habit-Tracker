@@ -44,7 +44,7 @@ export async function GET() {
   ).length;
 
   const streaks = habits.map((h) =>
-    calculateStreak(groupedCompletions[h._id.toString()] ?? [], h.frequency)
+    calculateStreak(groupedCompletions[h._id.toString()] ?? [])
   );
   const bestStreak = Math.max(0, ...streaks);
   const successRate =

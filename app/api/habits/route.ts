@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { name: rawName, category, frequency, color, icon } =
+    const { name: rawName, category, color, icon } =
       await req.json();
 
     if (!rawName) {
@@ -74,7 +74,6 @@ export async function POST(req: NextRequest) {
       userId: session.user.id,
       name,
       category: category ?? "General",
-      frequency: frequency ?? "Daily",
       color: color ?? "#6b8c3a",
       icon: icon ?? "target",
     });

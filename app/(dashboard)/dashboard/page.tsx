@@ -27,7 +27,6 @@ interface Habit {
   id: string;
   name: string;
   category: string;
-  frequency: string;
   color: string;
   completions: { date: string }[];
   streak: number;
@@ -70,7 +69,7 @@ export default function DashboardPage() {
 
     const enriched = rawHabits.map((h: Habit) => ({
       ...h,
-      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date), h.frequency),
+      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
     }));
 
     setHabits(enriched);
