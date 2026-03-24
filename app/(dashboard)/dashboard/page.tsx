@@ -85,13 +85,22 @@ export default function DashboardPage() {
 
   const handleToggle = async (habitId: string) => {
     const today2 = getTodayString();
+    const targetHabit = habits.find((h) => h.id === habitId);
+    const wasCompleted = targetHabit?.completions.some((c) => c.date === today2);
+
+    if (wasCompleted) {
+      toast("Unmarked", { duration: 1000 });
+    } else {
+      toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
+    }
+
     // Optimistic update — flip the completion state instantly
     setHabits((prev) =>
       prev.map((h) =>
         h.id === habitId
           ? {
               ...h,
-              completions: h.completions.some((c) => c.date === today2)
+              completions: wasCompleted
                 ? h.completions.filter((c) => c.date !== today2)
                 : [...h.completions, { date: today2 }],
             }
@@ -108,14 +117,8 @@ export default function DashboardPage() {
       const data = await res.json().catch(() => ({}));
       // Silent background sync to get accurate stats/streak
       fetchData();
-      if (data.completed) {
-        if (data.leveledUp) {
-          setLevelUpModal({ open: true, level: data.newLevel });
-        } else {
-          toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
-        }
-      } else {
-        toast("Unmarked", { duration: 1000 });
+      if (data.completed && data.leveledUp) {
+        setLevelUpModal({ open: true, level: data.newLevel });
       }
     } else {
       // Revert optimistic update on failure

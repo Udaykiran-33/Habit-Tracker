@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Filter, Check } from "lucide-react";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
 import CoinUsageModal from "@/components/ui/CoinUsageModal";
@@ -60,12 +60,40 @@ export default function HabitsPage() {
   }, [habits, search, category]);
 
   const handleToggle = async (habitId: string) => {
+    const targetHabit = habits.find((h) => h.id === habitId);
+    const wasCompleted = targetHabit?.completions.some((c) => c.date === today);
+
+    if (wasCompleted) {
+      toast("Unmarked", { duration: 1000 });
+    } else {
+      toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
+    }
+
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === habitId
+          ? {
+              ...h,
+              completions: wasCompleted
+                ? h.completions.filter((c) => c.date !== today)
+                : [...h.completions, { date: today }],
+            }
+          : h
+      )
+    );
+
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
-    if (res.ok) await fetchHabits();
+    if (res.ok) {
+      await fetchHabits();
+    } else {
+      // Revert optimistic update on failure
+      fetchHabits();
+      toast.error("Failed to update", { duration: 1000 });
+    }
   };
 
   const handleSaveHabit = async (data: Partial<Habit & { id?: string }>) => {
