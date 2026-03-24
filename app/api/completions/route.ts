@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const allHabitCompletions = await HabitCompletion.find({ habitId })
       .sort({ date: -1 }).lean();
     const completionDates = allHabitCompletions.map((c) => c.date);
-    const streak = calculateStreak(completionDates, habit.frequency);
+    const streak = calculateStreak(completionDates);
 
     // Update user XP and level
     const oldUser = await User.findById(session.user.id).select("level").lean() as { level: number } | null;
