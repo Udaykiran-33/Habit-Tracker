@@ -34,7 +34,6 @@ export default function AddHabitModal({
     category: "General",
     color: "#6b8c3a",
   });
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (editHabit) {
@@ -48,21 +47,15 @@ export default function AddHabitModal({
     }
   }, [editHabit, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
       toast.error("Habit name is required");
       return;
     }
-    setLoading(true);
-    try {
-      await onSave(editHabit ? { ...form, id: editHabit.id } : form);
-      onClose();
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
+    // Close modal instantly — parent handles optimistic update & errors
+    onSave(editHabit ? { ...form, id: editHabit.id } : form);
+    onClose();
   };
 
   return (
@@ -111,7 +104,7 @@ export default function AddHabitModal({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" className="flex-1" loading={loading}>
+          <Button type="submit" variant="primary" className="flex-1">
             {editHabit ? "Save Changes" : "Create Habit"}
           </Button>
         </div>

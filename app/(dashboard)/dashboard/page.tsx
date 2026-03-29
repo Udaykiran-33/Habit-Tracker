@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleToggle = async (habitId: string) => {
+  const handleToggle = (habitId: string) => {
     const today2 = getTodayString();
     const targetHabit = habits.find((h) => h.id === habitId);
     const wasCompleted = targetHabit?.completions.some((c) => c.date === today2);
@@ -94,7 +94,7 @@ export default function DashboardPage() {
       toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
     }
 
-    // Optimistic update — flip the completion state instantly
+    // --- Optimistic update: flip UI instantly ---
     setHabits((prev) =>
       prev.map((h) =>
         h.id === habitId
@@ -103,49 +103,167 @@ export default function DashboardPage() {
               completions: wasCompleted
                 ? h.completions.filter((c) => c.date !== today2)
                 : [...h.completions, { date: today2 }],
+              streak: wasCompleted
+                ? Math.max(0, h.streak - 1)
+                : h.streak, // streak recalc handled by fetchData on level-up
             }
           : h
       )
     );
 
-    const res = await fetch("/api/completions", {
+    // Optimistically update stats counters
+    setStats((prev) => {
+      if (!prev) return prev;
+      const delta = wasCompleted ? -1 : 1;
+      const newCompleted = Math.max(0, prev.completedToday + delta);
+      const newXp = wasCompleted ? prev.xp : prev.xp + 10;
+      return {
+        ...prev,
+        completedToday: newCompleted,
+        successRate: prev.totalHabits > 0
+          ? Math.round((newCompleted / prev.totalHabits) * 100)
+          : 0,
+        xp: newXp,
+      };
+    });
+
+    // --- Background sync (fire-and-forget) ---
+    fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
-    });
-    if (res.ok) {
-      const data = await res.json().catch(() => ({}));
-      // Silent background sync to get accurate stats/streak
-      fetchData();
-      if (data.completed && data.leveledUp) {
-        setLevelUpModal({ open: true, level: data.newLevel });
-      }
-    } else {
-      // Revert optimistic update on failure
-      fetchData();
-      toast.error("Failed to update", { duration: 1000 });
-    }
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json().catch(() => ({}));
+        }
+        // Server rejected — revert
+        return res.json().catch(() => ({})).then((d) => {
+          // revert habits
+          setHabits((prev) =>
+            prev.map((h) =>
+              h.id === habitId
+                ? {
+                    ...h,
+                    completions: wasCompleted
+                      ? [...h.completions, { date: today2 }]
+                      : h.completions.filter((c) => c.date !== today2),
+                  }
+                : h
+            )
+          );
+          // revert stats
+          setStats((prev) => {
+            if (!prev) return prev;
+            const delta = wasCompleted ? 1 : -1;
+            const reverted = Math.max(0, prev.completedToday + delta);
+            return {
+              ...prev,
+              completedToday: reverted,
+              successRate: prev.totalHabits > 0
+                ? Math.round((reverted / prev.totalHabits) * 100)
+                : 0,
+              xp: wasCompleted ? prev.xp + 10 : Math.max(0, prev.xp - 10),
+            };
+          });
+          toast.error(d?.error || "Failed to update", { duration: 1500 });
+          return null;
+        });
+      })
+      .then((data) => {
+        if (!data) return;
+        if (data.completed && data.leveledUp) {
+          // Level-up needs a full re-fetch for accurate new level data
+          fetchData();
+          setLevelUpModal({ open: true, level: data.newLevel });
+        } else if (data.streak !== undefined) {
+          // Refresh streak count from server for this habit
+          setHabits((prev) =>
+            prev.map((h) =>
+              h.id === habitId ? { ...h, streak: data.streak } : h
+            )
+          );
+        }
+      })
+      .catch(() => {
+        // Network error — revert
+        fetchData();
+      });
   };
 
   const handleSaveHabit = async (data: Partial<Habit & { id?: string }>) => {
-    const method = data.id ? "PUT" : "POST";
-    const url = data.id ? `/api/habits/${data.id}` : "/api/habits";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      await fetchData();
-      if (!data.id) {
-        // Only show coin modal on creation, not on edit
+    const isEdit = !!data.id;
+    const method = isEdit ? "PUT" : "POST";
+    const url = isEdit ? `/api/habits/${data.id}` : "/api/habits";
+
+    if (!isEdit) {
+      // --- Optimistic insert: show habit instantly ---
+      const tempId = `temp_${Date.now()}`;
+      const optimisticHabit: Habit = {
+        id: tempId,
+        name: data.name ?? "",
+        category: data.category ?? "General",
+        color: data.color ?? "#6b8c3a",
+        completions: [],
+        streak: 0,
+      };
+      setHabits((prev) => [...prev, optimisticHabit]);
+      setStats((prev) =>
+        prev ? { ...prev, totalHabits: prev.totalHabits + 1, coins: Math.max(0, prev.coins - 1) } : prev
+      );
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (res.ok) {
+        const resData = await res.json().catch(() => ({}));
+        // Swap temp habit with real server habit
+        const serverHabit = resData.habit;
+        setHabits((prev) =>
+          prev.map((h) =>
+            h.id === tempId
+              ? {
+                  ...serverHabit,
+                  id: serverHabit._id?.toString() ?? serverHabit.id,
+                  completions: [],
+                  streak: 0,
+                }
+              : h
+          )
+        );
         setCoinModalOpen(true);
       } else {
-        toast.success("Habit updated!", { duration: 1000 });
+        // Revert optimistic insert
+        setHabits((prev) => prev.filter((h) => h.id !== tempId));
+        setStats((prev) =>
+          prev ? { ...prev, totalHabits: prev.totalHabits - 1, coins: prev.coins + 1 } : prev
+        );
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Failed to create habit", { duration: 2000 });
       }
     } else {
-      const errData = await res.json().catch(() => ({}));
-      toast.error(errData.error || "Failed to save habit", { duration: 1000 });
+      // Edit — optimistic rename
+      const prevHabits = habits;
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === data.id ? { ...h, ...data } : h
+        )
+      );
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        toast.success("Habit updated!", { duration: 1000 });
+      } else {
+        setHabits(prevHabits); // revert
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Failed to save habit", { duration: 1000 });
+      }
     }
   };
 
@@ -155,12 +273,27 @@ export default function DashboardPage() {
 
   const confirmDelete = async () => {
     if (!deleteId) return;
+    // --- Optimistic removal ---
+    const removedHabit = habits.find((h) => h.id === deleteId);
+    setHabits((prev) => prev.filter((h) => h.id !== deleteId));
+    setStats((prev) =>
+      prev ? { ...prev, totalHabits: Math.max(0, prev.totalHabits - 1) } : prev
+    );
+    setDeleteId(null);
+
     const res = await fetch(`/api/habits/${deleteId}`, { method: "DELETE" });
     if (res.ok) {
-      await fetchData();
       toast.success("Habit removed", { duration: 1000 });
+    } else {
+      // Revert
+      if (removedHabit) {
+        setHabits((prev) => [...prev, removedHabit]);
+        setStats((prev) =>
+          prev ? { ...prev, totalHabits: prev.totalHabits + 1 } : prev
+        );
+      }
+      toast.error("Failed to delete habit", { duration: 1500 });
     }
-    setDeleteId(null);
   };
 
   const completedHabits = habits.filter((h) =>
@@ -312,7 +445,7 @@ export default function DashboardPage() {
                   key={habit.id}
                   habit={habit}
                   completedToday={habit.completions.some((c) => c.date === today)}
-                  onToggle={handleToggle}
+                  onToggle={(id) => { handleToggle(id); }}
                   onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
                   onDelete={handleDelete}
                 />

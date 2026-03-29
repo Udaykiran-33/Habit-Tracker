@@ -37,15 +37,9 @@ export default function HabitCard({
   onDelete,
 }: HabitCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleToggle = async () => {
-    setLoading(true);
-    try {
-      await onToggle(habit.id);
-    } finally {
-      setLoading(false);
-    }
+  // No loading state needed — parent update is synchronous/optimistic
+  const handleToggle = () => {
+    onToggle(habit.id);
   };
 
   return (
@@ -66,8 +60,7 @@ export default function HabitCard({
       {/* Toggle */}
       <button
         onClick={handleToggle}
-        disabled={loading}
-        className="flex-shrink-0 text-muted hover:text-olive-light transition-colors disabled:opacity-50"
+        className="flex-shrink-0 text-muted hover:text-olive-light transition-colors"
       >
         {completedToday ? (
           <CheckCircle2 size={20} className="text-olive sm:w-[22px] sm:h-[22px]" />
