@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -40,7 +40,7 @@ interface DashStats {
   xp: number;
   level: number;
   coins: number;
-  weekly: { day: string; completed: number; total: number }[];
+  weekly: { day: string; date: string; completed: number; total: number }[];
 }
 
 export default function DashboardPage() {
@@ -54,10 +54,6 @@ export default function DashboardPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [levelUpModal, setLevelUpModal] = useState<{ open: boolean; level: number }>({ open: false, level: 1 });
-  // Reactive set of habit IDs currently being toggled — drives the disabled visual on HabitCard
-  const [togglingSet, setTogglingSet] = useState<Set<string>>(new Set());
-  // Tracks habits with an in-flight toggle API call — prevents XP double-award on rapid clicks
-  const togglingHabits = useRef<Set<string>>(new Set());
   const today = getTodayString();
 
   const isDark = theme === "dark";
@@ -88,11 +84,6 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = (habitId: string) => {
-    // Prevent concurrent toggles for the same habit (fixes XP double-award)
-    if (togglingHabits.current.has(habitId)) return;
-    togglingHabits.current.add(habitId);
-    setTogglingSet((prev) => new Set(prev).add(habitId));
-
     const today2 = getTodayString();
     const targetHabit = habits.find((h) => h.id === habitId);
     const wasCompleted = targetHabit?.completions.some((c) => c.date === today2);
@@ -114,18 +105,23 @@ export default function DashboardPage() {
                 : [...h.completions, { date: today2 }],
               streak: wasCompleted
                 ? Math.max(0, h.streak - 1)
-                : h.streak, // streak recalc handled by fetchData on level-up
+                : h.streak + 1,
             }
           : h
       )
     );
 
-    // Optimistically update stats counters
+    // Optimistically update stats + weekly progress
     setStats((prev) => {
       if (!prev) return prev;
       const delta = wasCompleted ? -1 : 1;
       const newCompleted = Math.max(0, prev.completedToday + delta);
       const newXp = wasCompleted ? Math.max(0, prev.xp - 10) : prev.xp + 10;
+      const updatedWeekly = prev.weekly.map((entry) =>
+        entry.date === today2
+          ? { ...entry, completed: Math.max(0, entry.completed + delta) }
+          : entry
+      );
       return {
         ...prev,
         completedToday: newCompleted,
@@ -133,10 +129,11 @@ export default function DashboardPage() {
           ? Math.round((newCompleted / prev.totalHabits) * 100)
           : 0,
         xp: newXp,
+        weekly: updatedWeekly,
       };
     });
 
-    // --- Background sync ---
+    // --- Background sync (fire-and-forget) ---
     fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -146,9 +143,8 @@ export default function DashboardPage() {
         if (res.ok) {
           return res.json().catch(() => ({}));
         }
-        // Server rejected — revert
+        // Server rejected — revert everything
         return res.json().catch(() => ({})).then((d) => {
-          // revert habits
           setHabits((prev) =>
             prev.map((h) =>
               h.id === habitId
@@ -161,11 +157,15 @@ export default function DashboardPage() {
                 : h
             )
           );
-          // revert stats
           setStats((prev) => {
             if (!prev) return prev;
-            const delta = wasCompleted ? 1 : -1;
-            const reverted = Math.max(0, prev.completedToday + delta);
+            const revertDelta = wasCompleted ? 1 : -1;
+            const reverted = Math.max(0, prev.completedToday + revertDelta);
+            const revertedWeekly = prev.weekly.map((entry) =>
+              entry.date === today2
+                ? { ...entry, completed: Math.max(0, entry.completed + revertDelta) }
+                : entry
+            );
             return {
               ...prev,
               completedToday: reverted,
@@ -173,6 +173,7 @@ export default function DashboardPage() {
                 ? Math.round((reverted / prev.totalHabits) * 100)
                 : 0,
               xp: wasCompleted ? prev.xp + 10 : Math.max(0, prev.xp - 10),
+              weekly: revertedWeekly,
             };
           });
           toast.error(d?.error || "Failed to update", { duration: 1500 });
@@ -182,11 +183,9 @@ export default function DashboardPage() {
       .then((data) => {
         if (!data) return;
         if (data.completed && data.leveledUp) {
-          // Level-up needs a full re-fetch for accurate new level data
           fetchData();
           setLevelUpModal({ open: true, level: data.newLevel });
         } else if (data.streak !== undefined) {
-          // Refresh streak count from server for this habit
           setHabits((prev) =>
             prev.map((h) =>
               h.id === habitId ? { ...h, streak: data.streak } : h
@@ -195,17 +194,7 @@ export default function DashboardPage() {
         }
       })
       .catch(() => {
-        // Network error — revert
         fetchData();
-      })
-      .finally(() => {
-        // Release the lock so the habit can be toggled again
-        togglingHabits.current.delete(habitId);
-        setTogglingSet((prev) => {
-          const next = new Set(prev);
-          next.delete(habitId);
-          return next;
-        });
       });
   };
 
@@ -463,7 +452,6 @@ export default function DashboardPage() {
                   key={habit.id}
                   habit={habit}
                   completedToday={habit.completions.some((c) => c.date === today)}
-                  toggling={togglingSet.has(habit.id)}
                   onToggle={(id) => { handleToggle(id); }}
                   onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
                   onDelete={handleDelete}
