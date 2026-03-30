@@ -27,15 +27,26 @@ if (!globalForMongoose.mongoose) {
 }
 
 export async function connectDB() {
+  // If we have a live connection, reuse it
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
+  }
+
+  // If connection dropped (readyState 0=disconnected, 3=disconnecting), reset cache
+  if (cached.conn && mongoose.connection.readyState !== 1) {
+    cached.conn = null;
+    cached.promise = null;
   }
 
   if (!cached.promise) {
     console.log("[MongoDB] Connecting to database...");
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        bufferCommands: false,
+        bufferCommands: true,          // queue commands while connecting instead of failing immediately
+        maxPoolSize: 10,               // reuse up to 10 sockets
+        serverSelectionTimeoutMS: 10000, // give Atlas 10s to respond before failing
+        socketTimeoutMS: 45000,        // disconnect slow sockets after 45s
+        connectTimeoutMS: 10000,       // timeout for initial connection
       })
       .then((m) => {
         console.log("[MongoDB] Connected successfully");
