@@ -579,7 +579,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex justify-between text-[9px] text-muted mt-0.5">
                       <span>{weekDone} completed</span>
-                      <span>{weekTotal - weekDone} remaining</span>
+                     
                     </div>
                   </div>
                 </>
