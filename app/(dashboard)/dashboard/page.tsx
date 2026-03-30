@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -54,6 +54,10 @@ export default function DashboardPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [levelUpModal, setLevelUpModal] = useState<{ open: boolean; level: number }>({ open: false, level: 1 });
+  // Reactive set of habit IDs currently being toggled — drives the disabled visual on HabitCard
+  const [togglingSet, setTogglingSet] = useState<Set<string>>(new Set());
+  // Tracks habits with an in-flight toggle API call — prevents XP double-award on rapid clicks
+  const togglingHabits = useRef<Set<string>>(new Set());
   const today = getTodayString();
 
   const isDark = theme === "dark";
@@ -84,6 +88,11 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = (habitId: string) => {
+    // Prevent concurrent toggles for the same habit (fixes XP double-award)
+    if (togglingHabits.current.has(habitId)) return;
+    togglingHabits.current.add(habitId);
+    setTogglingSet((prev) => new Set(prev).add(habitId));
+
     const today2 = getTodayString();
     const targetHabit = habits.find((h) => h.id === habitId);
     const wasCompleted = targetHabit?.completions.some((c) => c.date === today2);
@@ -116,7 +125,7 @@ export default function DashboardPage() {
       if (!prev) return prev;
       const delta = wasCompleted ? -1 : 1;
       const newCompleted = Math.max(0, prev.completedToday + delta);
-      const newXp = wasCompleted ? prev.xp : prev.xp + 10;
+      const newXp = wasCompleted ? Math.max(0, prev.xp - 10) : prev.xp + 10;
       return {
         ...prev,
         completedToday: newCompleted,
@@ -127,7 +136,7 @@ export default function DashboardPage() {
       };
     });
 
-    // --- Background sync (fire-and-forget) ---
+    // --- Background sync ---
     fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -188,6 +197,15 @@ export default function DashboardPage() {
       .catch(() => {
         // Network error — revert
         fetchData();
+      })
+      .finally(() => {
+        // Release the lock so the habit can be toggled again
+        togglingHabits.current.delete(habitId);
+        setTogglingSet((prev) => {
+          const next = new Set(prev);
+          next.delete(habitId);
+          return next;
+        });
       });
   };
 
@@ -445,6 +463,7 @@ export default function DashboardPage() {
                   key={habit.id}
                   habit={habit}
                   completedToday={habit.completions.some((c) => c.date === today)}
+                  toggling={togglingSet.has(habit.id)}
                   onToggle={(id) => { handleToggle(id); }}
                   onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
                   onDelete={handleDelete}

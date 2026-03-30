@@ -24,6 +24,7 @@ interface Habit {
 interface HabitCardProps {
   habit: Habit;
   completedToday: boolean;
+  toggling?: boolean;
   onToggle: (id: string) => void;
   onEdit: (habit: Habit) => void;
   onDelete: (id: string) => void;
@@ -32,13 +33,14 @@ interface HabitCardProps {
 export default function HabitCard({
   habit,
   completedToday,
+  toggling = false,
   onToggle,
   onEdit,
   onDelete,
 }: HabitCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  // No loading state needed — parent update is synchronous/optimistic
   const handleToggle = () => {
+    if (toggling) return;
     onToggle(habit.id);
   };
 
@@ -60,7 +62,11 @@ export default function HabitCard({
       {/* Toggle */}
       <button
         onClick={handleToggle}
-        className="flex-shrink-0 text-muted hover:text-olive-light transition-colors"
+        disabled={toggling}
+        className={cn(
+          "flex-shrink-0 text-muted hover:text-olive-light transition-colors",
+          toggling && "opacity-50 cursor-wait pointer-events-none"
+        )}
       >
         {completedToday ? (
           <CheckCircle2 size={20} className="text-olive sm:w-[22px] sm:h-[22px]" />
