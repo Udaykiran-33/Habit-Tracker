@@ -204,6 +204,12 @@ export default function DashboardPage() {
     const url = isEdit ? `/api/habits/${data.id}` : "/api/habits";
 
     if (!isEdit) {
+      // Check coins before doing anything — no ghost habit on 0 coins
+      if ((stats?.coins ?? 0) < 1) {
+        toast.error("Insufficient U coins. Maintain consistency to earn more!", { duration: 2500 });
+        return;
+      }
+
       // --- Optimistic insert: show habit instantly ---
       const tempId = `temp_${Date.now()}`;
       const optimisticHabit: Habit = {
