@@ -24,6 +24,7 @@ export default function HabitsPage() {
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [coinModalOpen, setCoinModalOpen] = useState(false);
+  const [pendingHabitData, setPendingHabitData] = useState<Partial<Habit & { id?: string }> | null>(null);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const today = getTodayString();
@@ -96,20 +97,41 @@ export default function HabitsPage() {
     }
   };
 
+  // Called when user submits the AddHabitModal form
   const handleSaveHabit = async (data: Partial<Habit & { id?: string }>) => {
-    const method = data.id ? "PUT" : "POST";
-    const url = data.id ? `/api/habits/${data.id}` : "/api/habits";
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      await fetchHabits();
-      if (!data.id) {
-        setCoinModalOpen(true);
-      } else {
+    if (data.id) {
+      // Editing an existing habit — save immediately
+      const res = await fetch(`/api/habits/${data.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchHabits();
         toast.success("Habit updated!");
+      }
+    } else {
+      // Creating a new habit — show coin confirmation first
+      setPendingHabitData(data);
+      setCoinModalOpen(true);
+    }
+  };
+
+  // Called when user dismisses the CoinUsageModal
+  const handleCoinModalClose = async () => {
+    setCoinModalOpen(false);
+    if (pendingHabitData) {
+      const data = pendingHabitData;
+      setPendingHabitData(null);
+      const res = await fetch("/api/habits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        await fetchHabits();
+      } else {
+        toast.error("Failed to create habit");
       }
     }
   };
@@ -267,7 +289,7 @@ export default function HabitsPage() {
 
       <CoinUsageModal
         isOpen={coinModalOpen}
-        onClose={() => setCoinModalOpen(false)}
+        onClose={handleCoinModalClose}
       />
     </div>
   );
