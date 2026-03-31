@@ -6,8 +6,9 @@
  *   Olive: #6b8c3a       |  Olive-light: #8baf48
  *   Foreground: #f5f5f5  |  Muted: #777777
  *
- * NOTE: Uses /email-logo.png — a clean dark-background version of the
- * UrHabit logo mark, purpose-built for email rendering.
+ * Logo: Uses /logo.png served from the production domain.
+ * The logo URL is built from the `appUrl` param so it automatically
+ * resolves correctly on any deployment (staging, prod, etc.).
  */
 
 interface ReminderData {
@@ -26,8 +27,8 @@ export function habitReminderEmail({
   appUrl,
 }: ReminderData): string {
   const habitsUrl = `${appUrl}/habits`;
-  // Use the same logo.png as the nav — already deployed on Vercel production
-  const logoUrl = `https://urhabit.vercel.app/logo.png`;
+  // Derive logo URL from the passed-in appUrl so this works on any deployment
+  const logoUrl = `${appUrl}/logo.png`;
   const firstName = userName.split(" ")[0];
   const remaining = incompleteHabits.length;
 

@@ -23,13 +23,22 @@ export const maxDuration = 60;
 
 export async function GET(req: Request) {
   try {
-    // ── Auth guard — only Vercel Cron or manual calls with the secret ──
+    // ── Auth guard — CRON_SECRET must always be set and match ──
     const authHeader = req.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret) {
+      console.error("[Cron] CRON_SECRET env variable is not set — aborting for safety.");
+      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      console.warn("[Cron] Unauthorized request — invalid or missing Bearer token.");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const startTime = Date.now();
+    console.log(`[Cron] Habit reminder triggered at ${new Date().toISOString()}`);
 
     await connectDB();
 
@@ -39,10 +48,9 @@ export async function GET(req: Request) {
     const istDate = new Date(now.getTime() + istOffset);
     const todayString = istDate.toISOString().split("T")[0]; // YYYY-MM-DD
 
-    console.log(`[Cron] Running habit reminder for date: ${todayString}`);
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://urhabit.vercel.app";
+    console.log(`[Cron] Date: ${todayString} | App URL: ${appUrl}`);
 
-    const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL || "https://urhabit.vercel.app";
 
     // ── 1. Fetch ALL users in one query ──
     const users = await User.find({}, "name email").lean();
@@ -117,7 +125,7 @@ export async function GET(req: Request) {
         });
         return mailSender(
           email,
-          "🌙 Don't Break the Chain — You've Got Habits Left!",
+          "👊Don't Break the Chain — You've Got Habits Left!",
           html
         );
       })
@@ -132,8 +140,9 @@ export async function GET(req: Request) {
 
     const emailsSkipped = users.length - reminders.length;
 
+    const elapsed = Date.now() - startTime;
     console.log(
-      `[Cron] Done. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped (all habits done / no habits): ${emailsSkipped}`
+      `[Cron] Done in ${elapsed}ms. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped: ${emailsSkipped}, Total users: ${users.length}`
     );
 
     return NextResponse.json({

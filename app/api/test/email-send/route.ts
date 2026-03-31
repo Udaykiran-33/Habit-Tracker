@@ -90,7 +90,7 @@ export async function GET() {
 
     const success = await mailSender(
       TARGET_EMAIL,
-      "🌙 Don't Break the Chain — You've Got Habits Left!",
+      "👊 Don't Break the Chain — You've Got Habits Left!",
       html
     );
 
