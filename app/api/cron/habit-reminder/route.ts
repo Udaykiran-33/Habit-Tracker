@@ -9,10 +9,18 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
 /**
  * GET /api/cron/habit-reminder
  *
- * Triggered by Vercel Cron at 10 PM IST every day.
+ * Triggered by Vercel Cron at 10 PM IST (16:30 UTC) every day.
  * Sends a reminder email to every user who has at least one
  * incomplete (unmarked) habit for today.
+ *
+ * Optimised:
+ *  - All DB queries are batched (no per-user round-trips).
+ *  - Emails are sent in parallel via Promise.allSettled.
  */
+
+// Allow up to 60 s on Vercel Pro / Hobby (cron functions get more time).
+export const maxDuration = 60;
+
 export async function GET(req: Request) {
   try {
     // ── Auth guard — only Vercel Cron or manual calls with the secret ──
@@ -33,77 +41,106 @@ export async function GET(req: Request) {
 
     console.log(`[Cron] Running habit reminder for date: ${todayString}`);
 
-    // ── Fetch all users ──
-    const users = await User.find({}, "name email").lean();
-
-    let emailsSent = 0;
-    let emailsSkipped = 0;
-
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL || "https://urhabit.vercel.app";
 
-    for (const user of users) {
-      // Get all active habits for this user
-      const habits = await Habit.find(
-        { userId: user._id.toString(), isActive: true },
-        "name"
-      ).lean();
-
-      if (habits.length === 0) {
-        emailsSkipped++;
-        continue;
-      }
-
-      // Get today's completions for this user's habits
-      const habitIds = habits.map((h) => h._id.toString());
-      const completions = await HabitCompletion.find({
-        habitId: { $in: habitIds },
-        date: todayString,
-        completed: true,
-      }).lean();
-
-      const completedHabitIds = new Set(
-        completions.map((c) => c.habitId.toString())
-      );
-
-      // Find incomplete habits
-      const incompleteHabits = habits.filter(
-        (h) => !completedHabitIds.has(h._id.toString())
-      );
-
-      // All done — no need to send email
-      if (incompleteHabits.length === 0) {
-        emailsSkipped++;
-        continue;
-      }
-
-      // Build & send the email
-      const html = habitReminderEmail({
-        userName: user.name,
-        completedCount: habits.length - incompleteHabits.length,
-        totalCount: habits.length,
-        incompleteHabits: incompleteHabits.map((h) => h.name),
-        appUrl,
-      });
-
-      const sent = await mailSender(
-        user.email,
-        "🌙 Don't Break the Chain — You've Got Habits Left!",
-        html
-      );
-
-      if (sent) emailsSent++;
-      else emailsSkipped++;
+    // ── 1. Fetch ALL users in one query ──
+    const users = await User.find({}, "name email").lean();
+    if (users.length === 0) {
+      return NextResponse.json({ success: true, emailsSent: 0, emailsSkipped: 0, totalUsers: 0 });
     }
 
+    const userIds = users.map((u) => u._id.toString());
+
+    // ── 2. Fetch ALL active habits for all users in one query ──
+    const allHabits = await Habit.find(
+      { userId: { $in: userIds }, isActive: true },
+      "name userId"
+    ).lean();
+
+    // Group habits by userId
+    const habitsByUser = new Map<string, typeof allHabits>();
+    for (const habit of allHabits) {
+      const uid = habit.userId.toString();
+      if (!habitsByUser.has(uid)) habitsByUser.set(uid, []);
+      habitsByUser.get(uid)!.push(habit);
+    }
+
+    // ── 3. Fetch ALL completions for today in one query ──
+    const allHabitIds = allHabits.map((h) => h._id.toString());
+    const allCompletions = await HabitCompletion.find(
+      { habitId: { $in: allHabitIds }, date: todayString, completed: true },
+      "habitId"
+    ).lean();
+
+    const completedHabitIdSet = new Set(
+      allCompletions.map((c) => c.habitId.toString())
+    );
+
+    // ── 4. Build the list of users who need a reminder ──
+    const reminders: {
+      email: string;
+      name: string;
+      incompleteHabits: string[];
+      completedCount: number;
+      totalCount: number;
+    }[] = [];
+
+    for (const user of users) {
+      const uid = user._id.toString();
+      const habits = habitsByUser.get(uid) ?? [];
+      if (habits.length === 0) continue;
+
+      const incompleteHabits = habits.filter(
+        (h) => !completedHabitIdSet.has(h._id.toString())
+      );
+      if (incompleteHabits.length === 0) continue;
+
+      reminders.push({
+        email: user.email,
+        name: user.name,
+        incompleteHabits: incompleteHabits.map((h) => h.name),
+        completedCount: habits.length - incompleteHabits.length,
+        totalCount: habits.length,
+      });
+    }
+
+    // ── 5. Send all emails in parallel ──
+    const results = await Promise.allSettled(
+      reminders.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
+        const html = habitReminderEmail({
+          userName: name,
+          completedCount,
+          totalCount,
+          incompleteHabits,
+          appUrl,
+        });
+        return mailSender(
+          email,
+          "🌙 Don't Break the Chain — You've Got Habits Left!",
+          html
+        );
+      })
+    );
+
+    let emailsSent = 0;
+    let emailsFailed = 0;
+    for (const result of results) {
+      if (result.status === "fulfilled" && result.value) emailsSent++;
+      else emailsFailed++;
+    }
+
+    const emailsSkipped = users.length - reminders.length;
+
     console.log(
-      `[Cron] Done. Sent: ${emailsSent}, Skipped: ${emailsSkipped}`
+      `[Cron] Done. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped (all habits done / no habits): ${emailsSkipped}`
     );
 
     return NextResponse.json({
       success: true,
       date: todayString,
       emailsSent,
+      emailsFailed,
       emailsSkipped,
       totalUsers: users.length,
     });
