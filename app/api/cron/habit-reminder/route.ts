@@ -15,11 +15,14 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
  *
  * Optimised:
  *  - All DB queries are batched (no per-user round-trips).
- *  - Emails are sent in parallel via Promise.allSettled.
+ *  - Emails are sent sequentially with a 150ms delay to avoid Gmail 421 errors.
  */
 
 // Allow up to 60 s on Vercel Pro / Hobby (cron functions get more time).
 export const maxDuration = 60;
+
+// Small delay helper to avoid overwhelming Gmail SMTP
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function GET(req: Request) {
   try {
@@ -27,13 +30,17 @@ export async function GET(req: Request) {
     const authHeader = req.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
+    // DIAGNOSTIC logs visible in Vercel → Logs tab
+    console.log(`[Cron] Auth header received: ${authHeader ? authHeader.substring(0, 15) + "..." : "NONE"}`);
+    console.log(`[Cron] CRON_SECRET is set: ${!!cronSecret}, length: ${cronSecret?.length ?? 0}`);
+
     if (!cronSecret) {
       console.error("[Cron] CRON_SECRET env variable is not set — aborting for safety.");
       return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
     }
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      console.warn("[Cron] Unauthorized request — invalid or missing Bearer token.");
+      console.warn(`[Cron] Unauthorized — header does not match. Header starts with: ${authHeader?.substring(0, 15) ?? "NONE"}`);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -42,18 +49,15 @@ export async function GET(req: Request) {
 
     await connectDB();
 
-    // ── Get today's date string ──
-    // IMPORTANT: Use the same plain UTC date that the website uses via getTodayString().
-    // The completions API saves dates as new Date().toISOString().split("T")[0] (UTC).
-    // If we apply an IST offset here, we'll query the wrong date and miss today's completions.
-    const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD UTC
+    // ── Get today's date string (UTC, same as what the completions API saves) ──
+    const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://urhabit.vercel.app";
     console.log(`[Cron] Date: ${todayString} | App URL: ${appUrl}`);
 
-
     // ── 1. Fetch ALL users in one query ──
     const users = await User.find({}, "name email").lean();
+    console.log(`[Cron] Total users found: ${users.length}`);
     if (users.length === 0) {
       return NextResponse.json({ success: true, emailsSent: 0, emailsSkipped: 0, totalUsers: 0 });
     }
@@ -65,6 +69,7 @@ export async function GET(req: Request) {
       { userId: { $in: userIds }, isActive: true },
       "name userId"
     ).lean();
+    console.log(`[Cron] Total active habits found: ${allHabits.length}`);
 
     // Group habits by userId
     const habitsByUser = new Map<string, typeof allHabits>();
@@ -80,6 +85,7 @@ export async function GET(req: Request) {
       { habitId: { $in: allHabitIds }, date: todayString, completed: true },
       "habitId"
     ).lean();
+    console.log(`[Cron] Completions found for today: ${allCompletions.length}`);
 
     const completedHabitIdSet = new Set(
       allCompletions.map((c) => c.habitId.toString())
@@ -113,34 +119,39 @@ export async function GET(req: Request) {
       });
     }
 
-    // ── 5. Send all emails in parallel ──
-    const results = await Promise.allSettled(
-      reminders.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
-        const html = habitReminderEmail({
-          userName: name,
-          completedCount,
-          totalCount,
-          incompleteHabits,
-          appUrl,
-        });
-        return mailSender(
-          email,
-          "👊Don't Break the Chain — You've Got Habits Left!",
-          html
-        );
-      })
-    );
+    console.log(`[Cron] Users needing reminder: ${reminders.length}`);
 
+    // ── 5. Send emails sequentially with 150ms delay to avoid Gmail 421 errors ──
     let emailsSent = 0;
     let emailsFailed = 0;
-    for (const result of results) {
-      if (result.status === "fulfilled" && result.value) emailsSent++;
+
+    for (const { email, name, incompleteHabits, completedCount, totalCount } of reminders) {
+      const html = habitReminderEmail({
+        userName: name,
+        completedCount,
+        totalCount,
+        incompleteHabits,
+        appUrl,
+      });
+
+      const success = await mailSender(
+        email,
+        "👊 Don't Break the Chain — You've Got Habits Left!",
+        html
+      );
+
+      if (success) emailsSent++;
       else emailsFailed++;
+
+      // Wait 150ms between emails to stay under Gmail's burst limit
+      if (reminders.indexOf({ email, name, incompleteHabits, completedCount, totalCount }) < reminders.length - 1) {
+        await sleep(150);
+      }
     }
 
     const emailsSkipped = users.length - reminders.length;
-
     const elapsed = Date.now() - startTime;
+
     console.log(
       `[Cron] Done in ${elapsed}ms. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped: ${emailsSkipped}, Total users: ${users.length}`
     );

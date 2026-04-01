@@ -4,6 +4,8 @@ import { User, Habit, HabitCompletion } from "@/lib/models";
 import mailSender from "@/lib/mailSender";
 import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const maxDuration = 60;
 
 export async function GET() {
@@ -65,21 +67,27 @@ export async function GET() {
       });
     }
 
-    // 5. Send Emails
-    const results = await Promise.allSettled(
-      reminders.map(r => {
-        const html = habitReminderEmail({
-          userName: r.name,
-          completedCount: r.totalCount - r.incompleteCount,
-          totalCount: r.totalCount,
-          incompleteHabits: r.incompleteNames,
-          appUrl
-        });
-        return mailSender(r.email, "👊 Don't Break the Chain!", html);
-      })
-    );
+    // 5. Send Emails sequentially with delay to avoid Gmail 421 errors
+    let sentCount = 0;
+    let failedCount = 0;
 
-    const sentCount = results.filter(res => res.status === 'fulfilled' && res.value === true).length;
+    for (let i = 0; i < reminders.length; i++) {
+      const r = reminders[i];
+      const html = habitReminderEmail({
+        userName: r.name,
+        completedCount: r.totalCount - r.incompleteCount,
+        totalCount: r.totalCount,
+        incompleteHabits: r.incompleteNames,
+        appUrl
+      });
+
+      const success = await mailSender(r.email, "👊 Don't Break the Chain!", html);
+      if (success) sentCount++;
+      else failedCount++;
+
+      // 150ms delay between emails to stay under Gmail burst limits
+      if (i < reminders.length - 1) await sleep(150);
+    }
 
     return NextResponse.json({
       status: "Processing Complete",
@@ -87,7 +95,7 @@ export async function GET() {
         totalUsersInDB: totalUsers,
         totalRemindersAttempted: reminders.length,
         emailsSuccessfullySent: sentCount,
-        emailsFailed: reminders.length - sentCount,
+        emailsFailed: failedCount,
         recipients: reminders.map(r => r.email)
       }
     });
