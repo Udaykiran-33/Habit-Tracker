@@ -31,11 +31,11 @@ export async function GET() {
       );
     }
 
-    // ── 2. Get today's date string in IST (UTC+5:30) ──
-    const now = new Date();
-    const istOffset = 5.5 * 60 * 60 * 1000;
-    const istDate = new Date(now.getTime() + istOffset);
-    const todayString = istDate.toISOString().split("T")[0]; // YYYY-MM-DD
+    // ── 2. Get today's date string ──
+    // IMPORTANT: Use the same plain UTC date that the website uses via getTodayString().
+    // The completions API saves dates as new Date().toISOString().split("T")[0] (UTC).
+    // If we apply an IST offset here we'll query the wrong date and miss today's completions.
+    const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD UTC
 
     console.log(`[Test Email] Fetching habits for ${TARGET_EMAIL} on ${todayString}`);
 
