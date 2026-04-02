@@ -571,7 +571,7 @@ export default function DashboardPage() {
                   {/* Week-total summary bar */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-muted font-medium">Day completion</span>
+                      <span className="text-muted font-medium">Weekly completion</span>
                       <span className="font-semibold" style={{ color: ringFill }}>{weekPct}%</span>
                     </div>
                     <div
