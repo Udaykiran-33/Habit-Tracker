@@ -18,8 +18,8 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
  *  - Emails are sent sequentially with a 150ms delay to avoid Gmail 421 errors.
  */
 
-// Allow up to 60 s on Vercel Pro / Hobby (cron functions get more time).
-export const maxDuration = 60;
+// Vercel Hobby plan max is 10s. Pro plan allows up to 60s.
+export const maxDuration = 10;
 
 // Small delay helper to avoid overwhelming Gmail SMTP
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -125,7 +125,9 @@ export async function GET(req: Request) {
     let emailsSent = 0;
     let emailsFailed = 0;
 
-    for (const { email, name, incompleteHabits, completedCount, totalCount } of reminders) {
+    for (let i = 0; i < reminders.length; i++) {
+      const { email, name, incompleteHabits, completedCount, totalCount } = reminders[i];
+
       const html = habitReminderEmail({
         userName: name,
         completedCount,
@@ -144,7 +146,7 @@ export async function GET(req: Request) {
       else emailsFailed++;
 
       // Wait 150ms between emails to stay under Gmail's burst limit
-      if (reminders.indexOf({ email, name, incompleteHabits, completedCount, totalCount }) < reminders.length - 1) {
+      if (i < reminders.length - 1) {
         await sleep(150);
       }
     }
