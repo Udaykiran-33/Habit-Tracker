@@ -30,20 +30,22 @@ export async function POST(req: NextRequest) {
         HabitCompletion.deleteOne({ _id: existing._id }),
         User.updateOne({ _id: session.user.id }, { $inc: { xp: -10 } }),
       ]);
-      return NextResponse.json({ completed: false });
+      // Recalculate streak after removal so the client can sync accurately
+      const remainingCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
+      const streak = calculateStreak(remainingCompletions.map((c) => c.date));
+      return NextResponse.json({ completed: false, streak });
     }
 
-    // Mark complete — run independent operations in parallel where possible
-    const [allHabitCompletions] = await Promise.all([
-      HabitCompletion.find({ habitId }).sort({ date: -1 }).lean(),
-      HabitCompletion.create({ habitId, date: targetDate, completed: true }),
-    ]);
+    // Create completion first, THEN fetch all dates.
+    // Do NOT run find+create in parallel — if create finishes before find,
+    // today's date appears in allHabitCompletions AND gets appended again → duplicate → streak = 2.
+    await HabitCompletion.create({ habitId, date: targetDate, completed: true });
+    const allHabitCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
 
-    const completionDates = [
-      ...allHabitCompletions.map((c) => c.date),
-      targetDate,
-    ];
+    // No manual append — targetDate is already in the DB result above
+    const completionDates = allHabitCompletions.map((c) => c.date);
     const streak = calculateStreak(completionDates);
+
 
     // Update XP and level in one query
     const result = await User.findOneAndUpdate(

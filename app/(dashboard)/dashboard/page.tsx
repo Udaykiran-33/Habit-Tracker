@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   LayoutDashboard,
@@ -54,6 +54,12 @@ export default function DashboardPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [levelUpModal, setLevelUpModal] = useState<{ open: boolean; level: number }>({ open: false, level: 1 });
+
+  // Two-layer in-flight guard:
+  // 1. inFlightRef  — synchronous (useRef), blocks rapid clicks IMMEDIATELY before React batches state.
+  // 2. togglingIds  — state copy, only used to pass `toggling` prop to HabitCard for UI feedback.
+  const inFlightRef = useRef<Set<string>>(new Set());
+  const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const today = getTodayString();
 
   const isDark = theme === "dark";
@@ -84,6 +90,13 @@ export default function DashboardPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleToggle = (habitId: string) => {
+    // ── SYNCHRONOUS guard using useRef ──
+    // useRef reads the current value instantly — no React batching delay.
+    // useState-based guards fail because rapid clicks read the stale pre-batch state.
+    if (inFlightRef.current.has(habitId)) return;
+    inFlightRef.current.add(habitId);
+    setTogglingIds(new Set(inFlightRef.current)); // sync UI state for HabitCard prop
+
     const today2 = getTodayString();
     const targetHabit = habits.find((h) => h.id === habitId);
     const wasCompleted = targetHabit?.completions.some((c) => c.date === today2);
@@ -94,7 +107,9 @@ export default function DashboardPage() {
       toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
     }
 
-    // --- Optimistic update: flip UI instantly ---
+    // --- Optimistic update: flip completions only ---
+    // Streak is NOT updated here — the server returns the authoritative streak.
+    // Updating it optimistically causes a jump glitch (optimistic +1, then server overwrites).
     setHabits((prev) =>
       prev.map((h) =>
         h.id === habitId
@@ -103,9 +118,6 @@ export default function DashboardPage() {
               completions: wasCompleted
                 ? h.completions.filter((c) => c.date !== today2)
                 : [...h.completions, { date: today2 }],
-              streak: wasCompleted
-                ? Math.max(0, h.streak - 1)
-                : h.streak + 1,
             }
           : h
       )
@@ -133,7 +145,7 @@ export default function DashboardPage() {
       };
     });
 
-    // --- Background sync (fire-and-forget) ---
+    // --- Background sync ---
     fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -143,7 +155,7 @@ export default function DashboardPage() {
         if (res.ok) {
           return res.json().catch(() => ({}));
         }
-        // Server rejected — revert everything
+        // Server rejected — revert
         return res.json().catch(() => ({})).then((d) => {
           setHabits((prev) =>
             prev.map((h) =>
@@ -182,19 +194,26 @@ export default function DashboardPage() {
       })
       .then((data) => {
         if (!data) return;
-        if (data.completed && data.leveledUp) {
-          fetchData();
-          setLevelUpModal({ open: true, level: data.newLevel });
-        } else if (data.streak !== undefined) {
+        // Always sync streak from server (authoritative)
+        if (data.streak !== undefined) {
           setHabits((prev) =>
             prev.map((h) =>
               h.id === habitId ? { ...h, streak: data.streak } : h
             )
           );
         }
+        if (data.completed && data.leveledUp) {
+          fetchData();
+          setLevelUpModal({ open: true, level: data.newLevel });
+        }
       })
       .catch(() => {
         fetchData();
+      })
+      .finally(() => {
+        // Unlock — remove from BOTH the ref and state
+        inFlightRef.current.delete(habitId);
+        setTogglingIds(new Set(inFlightRef.current));
       });
   };
 
@@ -458,6 +477,7 @@ export default function DashboardPage() {
                   key={habit.id}
                   habit={habit}
                   completedToday={habit.completions.some((c) => c.date === today)}
+                  toggling={togglingIds.has(habit.id)}
                   onToggle={(id) => { handleToggle(id); }}
                   onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
                   onDelete={handleDelete}
