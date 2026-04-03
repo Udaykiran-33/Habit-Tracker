@@ -44,9 +44,9 @@ export async function connectDB() {
       .connect(MONGODB_URI, {
         bufferCommands: true,          // queue commands while connecting instead of failing immediately
         maxPoolSize: 10,               // reuse up to 10 sockets
-        serverSelectionTimeoutMS: 10000, // give Atlas 10s to respond before failing
+        serverSelectionTimeoutMS: 5000,  // fail fast — don't burn the full Vercel budget on Atlas selection
         socketTimeoutMS: 45000,        // disconnect slow sockets after 45s
-        connectTimeoutMS: 10000,       // timeout for initial connection
+        connectTimeoutMS: 5000,        // fail fast on initial connection
       })
       .then((m) => {
         console.log("[MongoDB] Connected successfully");

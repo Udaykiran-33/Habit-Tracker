@@ -18,11 +18,8 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
  *  - Emails are sent sequentially with a 150ms delay to avoid Gmail 421 errors.
  */
 
-// Vercel Hobby plan max is 10s. Pro plan allows up to 60s.
-export const maxDuration = 10;
-
-// Small delay helper to avoid overwhelming Gmail SMTP
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// Set to 60 to use the full Pro plan budget; Hobby plan will still cap at 10s.
+export const maxDuration = 60;
 
 export async function GET(req: Request) {
   try {
@@ -121,34 +118,29 @@ export async function GET(req: Request) {
 
     console.log(`[Cron] Users needing reminder: ${reminders.length}`);
 
-    // ── 5. Send emails sequentially with 150ms delay to avoid Gmail 421 errors ──
+    // ── 5. Send all emails in parallel for maximum speed within Vercel's budget ──
+    const emailResults = await Promise.allSettled(
+      reminders.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
+        const html = habitReminderEmail({
+          userName: name,
+          completedCount,
+          totalCount,
+          incompleteHabits,
+          appUrl,
+        });
+        return mailSender(
+          email,
+          "👊 Don't Break the Chain — You've Got Habits Left!",
+          html
+        );
+      })
+    );
+
     let emailsSent = 0;
     let emailsFailed = 0;
-
-    for (let i = 0; i < reminders.length; i++) {
-      const { email, name, incompleteHabits, completedCount, totalCount } = reminders[i];
-
-      const html = habitReminderEmail({
-        userName: name,
-        completedCount,
-        totalCount,
-        incompleteHabits,
-        appUrl,
-      });
-
-      const success = await mailSender(
-        email,
-        "👊 Don't Break the Chain — You've Got Habits Left!",
-        html
-      );
-
-      if (success) emailsSent++;
+    for (const result of emailResults) {
+      if (result.status === "fulfilled" && result.value) emailsSent++;
       else emailsFailed++;
-
-      // Wait 150ms between emails to stay under Gmail's burst limit
-      if (i < reminders.length - 1) {
-        await sleep(150);
-      }
     }
 
     const emailsSkipped = users.length - reminders.length;
