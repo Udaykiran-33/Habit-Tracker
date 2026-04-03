@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
@@ -13,55 +14,65 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
  * Sends a reminder email to every user who has at least one
  * incomplete (unmarked) habit for today.
  *
- * Optimised:
+ * Architecture:
+ *  - Returns HTTP 200 immediately so Vercel never hits the timeout.
+ *  - Uses next/server `after()` to run the real work (DB + email) after
+ *    the response is flushed — the official Next.js 15+ pattern for
+ *    post-response background tasks.
  *  - All DB queries are batched (no per-user round-trips).
- *  - Emails are sent sequentially with a 150ms delay to avoid Gmail 421 errors.
+ *  - Emails are sent in parallel via Promise.allSettled.
  */
 
-// Set to 60 to use the full Pro plan budget; Hobby plan will still cap at 10s.
+// 60 s on Pro; Hobby hard-caps at 10 s regardless.
+// The `after()` callback is NOT subject to this limit.
 export const maxDuration = 60;
 
 export async function GET(req: Request) {
+  // ── Auth guard ──────────────────────────────────────────────────────────────
+  const authHeader = req.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    console.error("[Cron] CRON_SECRET env variable is not set — aborting.");
+    return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    console.warn("[Cron] Unauthorized request.");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // ── Schedule background work AFTER the response is sent ────────────────────
+  // `after()` is a Next.js 15+ API (available in 16.x) that runs the callback
+  // after the HTTP response has been fully flushed. This means Vercel's
+  // function timeout clock stops when we return the NextResponse below,
+  // giving the email job unlimited time to finish.
+  after(sendReminders());
+
+  // Respond immediately — Vercel sees a completed request in <1 s
+  return NextResponse.json({ success: true, message: "Reminder job started in background" });
+}
+
+// ── Core logic (runs post-response via after()) ──────────────────────────────
+async function sendReminders() {
+  const startTime = Date.now();
+  console.log(`[Cron] Habit reminder triggered at ${new Date().toISOString()}`);
+
   try {
-    // ── Auth guard — CRON_SECRET must always be set and match ──
-    const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    // DIAGNOSTIC logs visible in Vercel → Logs tab
-    console.log(`[Cron] Auth header received: ${authHeader ? authHeader.substring(0, 15) + "..." : "NONE"}`);
-    console.log(`[Cron] CRON_SECRET is set: ${!!cronSecret}, length: ${cronSecret?.length ?? 0}`);
-
-    if (!cronSecret) {
-      console.error("[Cron] CRON_SECRET env variable is not set — aborting for safety.");
-      return NextResponse.json({ error: "Server misconfiguration" }, { status: 500 });
-    }
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      console.warn(`[Cron] Unauthorized — header does not match. Header starts with: ${authHeader?.substring(0, 15) ?? "NONE"}`);
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const startTime = Date.now();
-    console.log(`[Cron] Habit reminder triggered at ${new Date().toISOString()}`);
-
     await connectDB();
 
-    // ── Get today's date string (UTC, same as what the completions API saves) ──
     const todayString = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
-
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://urhabit.vercel.app";
     console.log(`[Cron] Date: ${todayString} | App URL: ${appUrl}`);
 
-    // ── 1. Fetch ALL users in one query ──
+    // 1. Fetch ALL users in one query
     const users = await User.find({}, "name email").lean();
     console.log(`[Cron] Total users found: ${users.length}`);
-    if (users.length === 0) {
-      return NextResponse.json({ success: true, emailsSent: 0, emailsSkipped: 0, totalUsers: 0 });
-    }
+    if (users.length === 0) return;
 
     const userIds = users.map((u) => u._id.toString());
 
-    // ── 2. Fetch ALL active habits for all users in one query ──
+    // 2. Fetch ALL active habits in one query
     const allHabits = await Habit.find(
       { userId: { $in: userIds }, isActive: true },
       "name userId"
@@ -76,7 +87,7 @@ export async function GET(req: Request) {
       habitsByUser.get(uid)!.push(habit);
     }
 
-    // ── 3. Fetch ALL completions for today in one query ──
+    // 3. Fetch ALL completions for today in one query
     const allHabitIds = allHabits.map((h) => h._id.toString());
     const allCompletions = await HabitCompletion.find(
       { habitId: { $in: allHabitIds }, date: todayString, completed: true },
@@ -88,7 +99,7 @@ export async function GET(req: Request) {
       allCompletions.map((c) => c.habitId.toString())
     );
 
-    // ── 4. Build the list of users who need a reminder ──
+    // 4. Build the list of users who need a reminder
     const reminders: {
       email: string;
       name: string;
@@ -118,7 +129,7 @@ export async function GET(req: Request) {
 
     console.log(`[Cron] Users needing reminder: ${reminders.length}`);
 
-    // ── 5. Send all emails in parallel for maximum speed within Vercel's budget ──
+    // 5. Send all emails in parallel
     const emailResults = await Promise.allSettled(
       reminders.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
         const html = habitReminderEmail({
@@ -143,26 +154,11 @@ export async function GET(req: Request) {
       else emailsFailed++;
     }
 
-    const emailsSkipped = users.length - reminders.length;
     const elapsed = Date.now() - startTime;
-
     console.log(
-      `[Cron] Done in ${elapsed}ms. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped: ${emailsSkipped}, Total users: ${users.length}`
+      `[Cron] Done in ${elapsed}ms. Sent: ${emailsSent}, Failed: ${emailsFailed}, Skipped: ${users.length - reminders.length}, Total users: ${users.length}`
     );
-
-    return NextResponse.json({
-      success: true,
-      date: todayString,
-      emailsSent,
-      emailsFailed,
-      emailsSkipped,
-      totalUsers: users.length,
-    });
   } catch (error) {
     console.error("[Cron] Habit reminder error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
   }
 }

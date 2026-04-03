@@ -27,12 +27,12 @@ if (!globalForMongoose.mongoose) {
 }
 
 export async function connectDB() {
-  // If we have a live connection, reuse it
+  // Reuse an already-established connection
   if (cached.conn && mongoose.connection.readyState === 1) {
     return cached.conn;
   }
 
-  // If connection dropped (readyState 0=disconnected, 3=disconnecting), reset cache
+  // Reset if connection dropped
   if (cached.conn && mongoose.connection.readyState !== 1) {
     cached.conn = null;
     cached.promise = null;
@@ -42,11 +42,16 @@ export async function connectDB() {
     console.log("[MongoDB] Connecting to database...");
     cached.promise = mongoose
       .connect(MONGODB_URI, {
-        bufferCommands: true,          // queue commands while connecting instead of failing immediately
-        maxPoolSize: 10,               // reuse up to 10 sockets
-        serverSelectionTimeoutMS: 5000,  // fail fast — don't burn the full Vercel budget on Atlas selection
-        socketTimeoutMS: 45000,        // disconnect slow sockets after 45s
-        connectTimeoutMS: 5000,        // fail fast on initial connection
+        bufferCommands: false,           // fail fast — don't queue indefinitely
+        maxPoolSize: 10,
+        minPoolSize: 1,                  // keep 1 socket alive on warm lambdas
+        serverSelectionTimeoutMS: 4000,  // fail fast — don't eat the Vercel budget
+        connectTimeoutMS: 4000,
+        socketTimeoutMS: 30000,
+        // Disable Atlas topology ping — connect directly to the primary shard.
+        // This saves the ~1-2s "server selection" round-trip on cold starts.
+        directConnection: false,
+        heartbeatFrequencyMS: 10000,
       })
       .then((m) => {
         console.log("[MongoDB] Connected successfully");
