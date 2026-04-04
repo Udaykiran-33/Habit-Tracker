@@ -24,9 +24,9 @@ export default function HabitsPage() {
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
   const [coinModalOpen, setCoinModalOpen] = useState(false);
-  const [pendingHabitData, setPendingHabitData] = useState<Partial<Habit & { id?: string }> | null>(null);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [coins, setCoins] = useState<number | null>(null);
   const today = getTodayString();
 
   const fetchHabits = async () => {
@@ -45,7 +45,20 @@ export default function HabitsPage() {
     }
   };
 
-  useEffect(() => { fetchHabits(); }, []);
+  const fetchCoins = async () => {
+    try {
+      const res = await fetch("/api/stats");
+      const data = await res.json();
+      setCoins(data.coins ?? 0);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    fetchHabits();
+    fetchCoins();
+  }, []);
 
   useEffect(() => {
     let result = [...habits];
@@ -90,6 +103,7 @@ export default function HabitsPage() {
     });
     if (res.ok) {
       await fetchHabits();
+      await fetchCoins();
     } else {
       // Revert optimistic update on failure
       fetchHabits();
@@ -111,27 +125,28 @@ export default function HabitsPage() {
         toast.success("Habit updated!");
       }
     } else {
-      // Creating a new habit — show coin confirmation first
-      setPendingHabitData(data);
-      setCoinModalOpen(true);
-    }
-  };
+      // Creating a new habit — check coins first
+      if ((coins ?? 0) < 1) {
+        toast.error("Insufficient U coins. Maintain consistency to earn more!", { duration: 2500 });
+        return;
+      }
 
-  // Called when user dismisses the CoinUsageModal
-  const handleCoinModalClose = async () => {
-    setCoinModalOpen(false);
-    if (pendingHabitData) {
-      const data = pendingHabitData;
-      setPendingHabitData(null);
+      // Proceed to create the habit
       const res = await fetch("/api/habits", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
       if (res.ok) {
+        // Deduct coin locally and show the CoinUsageModal
+        setCoins((prev) => Math.max(0, (prev ?? 1) - 1));
         await fetchHabits();
+        setModalOpen(false);
+        setCoinModalOpen(true);
       } else {
-        toast.error("Failed to create habit");
+        const errData = await res.json().catch(() => ({}));
+        toast.error(errData.error || "Failed to create habit", { duration: 2000 });
       }
     }
   };
@@ -289,7 +304,7 @@ export default function HabitsPage() {
 
       <CoinUsageModal
         isOpen={coinModalOpen}
-        onClose={handleCoinModalClose}
+        onClose={() => setCoinModalOpen(false)}
       />
     </div>
   );
