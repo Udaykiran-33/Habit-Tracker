@@ -1,33 +1,40 @@
 import nodemailer from "nodemailer";
-import type { TransportOptions } from "nodemailer";
+import type { Transporter, TransportOptions } from "nodemailer";
 
 /**
- * mailSender — serverless-friendly SMTP mailer via Gmail.
+ * createTransporter — build a single Nodemailer transporter to be
+ * reused across multiple sends (avoids repeated TLS handshakes).
+ */
+export function createTransporter(): Transporter {
+  return nodemailer.createTransport({
+    host: process.env.MAIL_HOST || "smtp.gmail.com",
+    port: 465,
+    secure: true, // TLS on port 465
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASSWORD,
+    },
+  } as TransportOptions);
+}
+
+/**
+ * mailSender — sends a single HTML email.
  *
- * No connection pooling: pools don't survive across lambda cold starts —
- * a "pooled" singleton is just a dead socket on every cold invocation.
- * nodemailer defaults to non-pooled (pool: false), so we omit the option
- * entirely to stay compatible with the strict TypeScript overloads.
- *
- * A hard 8 s deadline is enforced via Promise.race so a stalled Gmail
- * SMTP server fails fast instead of silently blocking until Vercel kills
- * the lambda.
+ * @param email     Recipient address
+ * @param title     Subject line
+ * @param body      HTML body
+ * @param transport Optional shared transporter (pass one for bulk sends to
+ *                  avoid repeated TLS handshakes). A fresh one is created
+ *                  if omitted (good for one-off sends).
  */
 const mailSender = async (
   email: string,
   title: string,
-  body: string
+  body: string,
+  transport?: Transporter
 ): Promise<boolean> => {
   try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST || "smtp.gmail.com",
-      port: 465,
-      secure: true, // TLS on port 465
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASSWORD,
-      },
-    } as TransportOptions);
+    const transporter = transport ?? createTransporter();
 
     const sendPromise = transporter.sendMail({
       from: `"UrHabit" <${process.env.MAIL_USER}>`,
@@ -36,9 +43,9 @@ const mailSender = async (
       html: body,
     });
 
-    // Hard deadline — don't let a stalled SMTP server eat Vercel's budget
+    // Hard deadline — 15 s gives stragglers room without eating Vercel budget
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Mail send timed out after 8 s")), 8000)
+      setTimeout(() => reject(new Error("Mail send timed out after 15 s")), 15000)
     );
 
     await Promise.race([sendPromise, timeoutPromise]);

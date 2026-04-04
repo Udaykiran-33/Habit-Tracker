@@ -4,7 +4,7 @@ import { connectDB } from "@/lib/db";
 import { User } from "@/lib/models/User";
 import { Habit } from "@/lib/models/Habit";
 import { HabitCompletion } from "@/lib/models/HabitCompletion";
-import mailSender from "@/lib/mailSender";
+import mailSender, { createTransporter } from "@/lib/mailSender";
 import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
 
 /**
@@ -20,12 +20,23 @@ import { habitReminderEmail } from "@/lib/emailTemplates/habitReminderEmail";
  *    the response is flushed — the official Next.js 15+ pattern for
  *    post-response background tasks.
  *  - All DB queries are batched (no per-user round-trips).
- *  - Emails are sent in parallel via Promise.allSettled.
+ *  - Emails are sent in small concurrent batches (BATCH_SIZE) with a
+ *    short pause between each batch to avoid Gmail rate-limiting.
+ *    Full parallel sending was causing Gmail to reject ~30% of emails.
  */
 
 // 60 s on Pro; Hobby hard-caps at 10 s regardless.
 // The `after()` callback is NOT subject to this limit.
 export const maxDuration = 60;
+
+/** How many emails to fire simultaneously per batch */
+const BATCH_SIZE = 3;
+
+/** Milliseconds pause between batches — gives Gmail's rate-limiter time to breathe */
+const BATCH_DELAY_MS = 1500;
+
+/** Small helper: resolves after `ms` milliseconds */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function GET(req: Request) {
   // ── Auth guard ──────────────────────────────────────────────────────────────
@@ -43,10 +54,6 @@ export async function GET(req: Request) {
   }
 
   // ── Schedule background work AFTER the response is sent ────────────────────
-  // `after()` is a Next.js 15+ API (available in 16.x) that runs the callback
-  // after the HTTP response has been fully flushed. This means Vercel's
-  // function timeout clock stops when we return the NextResponse below,
-  // giving the email job unlimited time to finish.
   after(sendReminders());
 
   // Respond immediately — Vercel sees a completed request in <1 s
@@ -129,29 +136,49 @@ async function sendReminders() {
 
     console.log(`[Cron] Users needing reminder: ${reminders.length}`);
 
-    // 5. Send all emails in parallel
-    const emailResults = await Promise.allSettled(
-      reminders.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
-        const html = habitReminderEmail({
-          userName: name,
-          completedCount,
-          totalCount,
-          incompleteHabits,
-          appUrl,
-        });
-        return mailSender(
-          email,
-          "👊 Don't Break the Chain — You've Got Habits Left!",
-          html
-        );
-      })
-    );
-
+    // 5. Send emails in small batches to avoid Gmail rate-limiting
+    //
+    // Full parallel (Promise.allSettled over all) caused Gmail to throttle
+    // after ~9 simultaneous connections, failing the remaining recipients.
+    // Batching BATCH_SIZE at a time with BATCH_DELAY_MS between batches
+    // keeps concurrent connections low enough for Gmail to accept all of them.
+    const transporter = createTransporter();
     let emailsSent = 0;
     let emailsFailed = 0;
-    for (const result of emailResults) {
-      if (result.status === "fulfilled" && result.value) emailsSent++;
-      else emailsFailed++;
+
+    for (let i = 0; i < reminders.length; i += BATCH_SIZE) {
+      const batch = reminders.slice(i, i + BATCH_SIZE);
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(reminders.length / BATCH_SIZE);
+      console.log(`[Cron] Sending batch ${batchNumber}/${totalBatches} (${batch.length} emails)…`);
+
+      const results = await Promise.allSettled(
+        batch.map(({ email, name, incompleteHabits, completedCount, totalCount }) => {
+          const html = habitReminderEmail({
+            userName: name,
+            completedCount,
+            totalCount,
+            incompleteHabits,
+            appUrl,
+          });
+          return mailSender(
+            email,
+            "👊 Don't Break the Chain — You've Got Habits Left!",
+            html,
+            transporter
+          );
+        })
+      );
+
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value) emailsSent++;
+        else emailsFailed++;
+      }
+
+      // Pause between batches (skip delay after the last batch)
+      if (i + BATCH_SIZE < reminders.length) {
+        await sleep(BATCH_DELAY_MS);
+      }
     }
 
     const elapsed = Date.now() - startTime;
