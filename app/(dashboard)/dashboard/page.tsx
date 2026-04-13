@@ -30,6 +30,8 @@ interface Habit {
   color: string;
   completions: { date: string }[];
   streak: number;
+  streakFrozen?: boolean;
+  frozenStreak?: number;
 }
 
 interface DashStats {
@@ -73,9 +75,15 @@ export default function DashboardPage() {
     const { habits: rawHabits } = await hRes.json();
     const statsData = await sRes.json();
 
-    const enriched = rawHabits.map((h: Habit) => ({
+    const enriched = rawHabits.map((h: Habit & { frozenStreak?: number; streakFrozen?: boolean }) => ({
       ...h,
-      streak: calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+      // When frozen, use the server-stored frozenStreak (captured at freeze-time).
+      // When not frozen, compute the streak from actual completions.
+      streak: h.streakFrozen
+        ? (h.frozenStreak ?? calculateStreak(h.completions.map((c: { date: string }) => c.date)))
+        : calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+      streakFrozen: h.streakFrozen ?? false,
+      frozenStreak: h.frozenStreak ?? 0,
     }));
 
     setHabits(enriched);
@@ -303,6 +311,65 @@ export default function DashboardPage() {
     setDeleteId(id);
   };
 
+  const handleFreezeToggle = async (id: string, freeze: boolean) => {
+    // Optimistic update — capture current streak to freeze at
+    const currentHabit = habits.find((h) => h.id === id);
+    const optimisticFrozenStreak = freeze ? (currentHabit?.streak ?? 0) : 0;
+
+    setHabits((prev) =>
+      prev.map((h) =>
+        h.id === id
+          ? {
+              ...h,
+              streakFrozen: freeze,
+              frozenStreak: optimisticFrozenStreak,
+              streak: freeze ? (h.streak ?? 0) : h.streak,
+            }
+          : h
+      )
+    );
+
+    const res = await fetch(`/api/habits/${id}/freeze`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ freeze }),
+    });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      // Commit server's authoritative frozenStreak to state
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === id
+            ? {
+                ...h,
+                streakFrozen: data.streakFrozen ?? freeze,
+                frozenStreak: data.frozenStreak ?? optimisticFrozenStreak,
+                streak: freeze
+                  ? (data.frozenStreak ?? optimisticFrozenStreak)
+                  : h.streak,
+              }
+            : h
+        )
+      );
+      if (freeze) {
+        toast.success("Streak frozen ❄️ — your streak is safe!", { duration: 2500 });
+      } else {
+        toast.success("Streak unfrozen 🔥 — keep the momentum!", { duration: 2500 });
+      }
+    } else {
+      // Revert on failure
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === id
+            ? { ...h, streakFrozen: !freeze, frozenStreak: currentHabit?.frozenStreak ?? 0 }
+            : h
+        )
+      );
+      toast.error("Failed to update streak freeze");
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleteId) return;
     // --- Optimistic removal ---
@@ -481,6 +548,7 @@ export default function DashboardPage() {
                   onToggle={(id) => { handleToggle(id); }}
                   onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
                   onDelete={handleDelete}
+                  onFreezeToggle={handleFreezeToggle}
                 />
               ))}
             </div>

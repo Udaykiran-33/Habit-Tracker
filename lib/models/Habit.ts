@@ -1,4 +1,4 @@
-import mongoose, { Schema, models, model, Document } from "mongoose";
+import { Schema, models, model, Document } from "mongoose";
 
 export interface IHabit extends Document {
   userId: string;
@@ -7,6 +7,8 @@ export interface IHabit extends Document {
   color: string;
   icon: string;
   isActive: boolean;
+  streakFrozen: boolean;
+  frozenStreak: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,6 +21,8 @@ const HabitSchema = new Schema<IHabit>(
     color: { type: String, default: "#6B8C3A" },
     icon: { type: String, default: "target" },
     isActive: { type: Boolean, default: true },
+    streakFrozen: { type: Boolean, default: false },
+    frozenStreak: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

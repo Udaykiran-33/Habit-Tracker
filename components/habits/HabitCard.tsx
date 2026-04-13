@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Circle,
   Flame,
+  Snowflake,
   MoreVertical,
   Pencil,
   Trash2,
@@ -19,6 +20,7 @@ interface Habit {
   color: string;
   completions: { date: string }[];
   streak: number;
+  streakFrozen?: boolean;
 }
 
 interface HabitCardProps {
@@ -28,6 +30,7 @@ interface HabitCardProps {
   onToggle: (id: string) => void;
   onEdit: (habit: Habit) => void;
   onDelete: (id: string) => void;
+  onFreezeToggle: (id: string, freeze: boolean) => void;
 }
 
 export default function HabitCard({
@@ -37,12 +40,24 @@ export default function HabitCard({
   onToggle,
   onEdit,
   onDelete,
+  onFreezeToggle,
 }: HabitCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [freezing, setFreezing] = useState(false);
+
   const handleToggle = () => {
     if (toggling) return;
     onToggle(habit.id);
   };
+
+  const handleFreezeToggle = async () => {
+    setMenuOpen(false);
+    setFreezing(true);
+    await onFreezeToggle(habit.id, !habit.streakFrozen);
+    setFreezing(false);
+  };
+
+  const isFrozen = habit.streakFrozen ?? false;
 
   return (
     <div
@@ -50,22 +65,24 @@ export default function HabitCard({
         "group relative rounded-xl border p-2.5 sm:p-4 flex items-center gap-2.5 sm:gap-4 transition-all",
         completedToday
           ? "bg-olive-bg border-olive/50"
+          : isFrozen
+          ? "bg-[#0d1f2d] border-[#1e4d7a]/60"
           : "bg-surface border-border hover:border-border-hover"
       )}
     >
       {/* Color dot */}
       <div
         className="w-1 h-8 sm:h-10 rounded-full flex-shrink-0"
-        style={{ backgroundColor: habit.color }}
+        style={{ backgroundColor: isFrozen ? "#60a5fa" : habit.color }}
       />
 
       {/* Toggle */}
       <button
         onClick={handleToggle}
-        disabled={toggling}
+        disabled={toggling || isFrozen}
         className={cn(
           "flex-shrink-0 text-muted hover:text-olive-light transition-colors",
-          toggling && "opacity-50 cursor-wait pointer-events-none"
+          (toggling || isFrozen) && "opacity-50 cursor-not-allowed pointer-events-none"
         )}
       >
         {completedToday ? (
@@ -77,14 +94,25 @@ export default function HabitCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p
-          className={cn(
-            "font-medium text-[13px] sm:text-sm truncate",
-            completedToday ? "text-olive-light" : "text-foreground"
+        <div className="flex items-center gap-1.5">
+          <p
+            className={cn(
+              "font-medium text-[13px] sm:text-sm truncate",
+              completedToday
+                ? "text-olive-light"
+                : isFrozen
+                ? "text-blue-300"
+                : "text-foreground"
+            )}
+          >
+            {habit.name}
+          </p>
+          {isFrozen && (
+            <span className="flex-shrink-0 text-[9px] sm:text-[10px] font-semibold tracking-wide text-blue-400 bg-blue-500/15 border border-blue-500/30 rounded px-1.5 py-0.5">
+              FROZEN
+            </span>
           )}
-        >
-          {habit.name}
-        </p>
+        </div>
         <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
           <Badge label={habit.category} variant="gray" />
         </div>
@@ -92,8 +120,17 @@ export default function HabitCard({
 
       {/* Streak */}
       {habit.streak > 0 && (
-        <div className="flex items-center gap-0.5 sm:gap-1 text-orange-400 text-[10px] sm:text-xs font-semibold flex-shrink-0">
-          <Flame size={12} className="sm:w-[13px] sm:h-[13px]" />
+        <div
+          className={cn(
+            "flex items-center gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-semibold flex-shrink-0",
+            isFrozen ? "text-blue-400" : "text-orange-400"
+          )}
+        >
+          {isFrozen ? (
+            <Snowflake size={12} className="sm:w-[13px] sm:h-[13px]" />
+          ) : (
+            <Flame size={12} className="sm:w-[13px] sm:h-[13px]" />
+          )}
           {habit.streak}
         </div>
       )}
@@ -112,13 +149,39 @@ export default function HabitCard({
               className="fixed inset-0 z-10"
               onClick={() => setMenuOpen(false)}
             />
-            <div className="absolute right-0 top-7 z-20 bg-surface-2 border border-border rounded-lg shadow-xl py-1 w-36">
+            <div className="absolute right-0 top-7 z-20 bg-surface-2 border border-border rounded-lg shadow-xl py-1 w-40">
               <button
                 onClick={() => { onEdit(habit); setMenuOpen(false); }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-foreground hover:bg-border transition-colors"
               >
                 <Pencil size={13} className="text-muted" /> Edit
               </button>
+
+              {/* Freeze / Unfreeze */}
+              <button
+                onClick={handleFreezeToggle}
+                disabled={freezing}
+                className={cn(
+                  "flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors",
+                  isFrozen
+                    ? "text-orange-400 hover:bg-orange-500/10"
+                    : "text-blue-400 hover:bg-blue-500/10",
+                  freezing && "opacity-50 cursor-wait"
+                )}
+              >
+                {isFrozen ? (
+                  <>
+                    <Flame size={13} /> Unfreeze
+                  </>
+                ) : (
+                  <>
+                    <Snowflake size={13} /> Freeze Streak
+                  </>
+                )}
+              </button>
+
+              <div className="my-1 border-t border-border/50" />
+
               <button
                 onClick={() => { onDelete(habit.id); setMenuOpen(false); }}
                 className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"

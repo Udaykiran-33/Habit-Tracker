@@ -82,7 +82,7 @@ async function sendReminders() {
     // 2. Fetch ALL active habits in one query
     const allHabits = await Habit.find(
       { userId: { $in: userIds }, isActive: true },
-      "name userId"
+      "name userId streakFrozen"
     ).lean();
     console.log(`[Cron] Total active habits found: ${allHabits.length}`);
 
@@ -121,7 +121,7 @@ async function sendReminders() {
       if (habits.length === 0) continue;
 
       const incompleteHabits = habits.filter(
-        (h) => !completedHabitIdSet.has(h._id.toString())
+        (h) => !completedHabitIdSet.has(h._id.toString()) && h.streakFrozen !== true
       );
       if (incompleteHabits.length === 0) continue;
 
