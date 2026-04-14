@@ -60,7 +60,7 @@ export default function AchievementsPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const totalCompletions = habits.reduce((s, h) => s + h.completions.length, 0);
-  const bestStreak = Math.max(0, ...habits.map((h) => calculateStreak(h.completions.map((c) => c.date))));
+  const bestStreak = Math.max(0, ...habits.map((h) => calculateStreak(h.completions)));
   const level = getLevel(xp);
   const levelTitle = getLevelTitle(level);
   const xpProgress = ((xp % 100) / 100) * 100;

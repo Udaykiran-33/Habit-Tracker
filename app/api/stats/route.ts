@@ -32,15 +32,15 @@ export async function GET() {
     .lean();
 
   // Group completions by habit
-  const groupedCompletions: Record<string, string[]> = {};
+  const groupedCompletions: Record<string, any[]> = {};
   for (const c of completions) {
     if (!groupedCompletions[c.habitId]) groupedCompletions[c.habitId] = [];
-    groupedCompletions[c.habitId].push(c.date);
+    groupedCompletions[c.habitId].push({ date: c.date, isFrozen: !!c.isFrozen });
   }
 
   const totalHabits = habits.length;
   const completedToday = habits.filter((h) =>
-    groupedCompletions[h._id.toString()]?.includes(today)
+    groupedCompletions[h._id.toString()]?.some((c: any) => c.date === today && !c.isFrozen)
   ).length;
 
   const streaks = habits.map((h) =>
@@ -66,7 +66,7 @@ export async function GET() {
     const count = isFuture
       ? 0
       : habits.filter((h) =>
-          groupedCompletions[h._id.toString()]?.includes(dateStr)
+          groupedCompletions[h._id.toString()]?.some((c: any) => c.date === dateStr && !c.isFrozen)
         ).length;
 
     // Calculate how many habits existed on this specific day

@@ -17,24 +17,31 @@ export function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-export function calculateStreak(completions: string[]): number {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function calculateStreak(completions: any[]): number {
   if (!completions.length) return 0;
   
-  const sorted = [...completions].sort().reverse();
+  const mapped = completions.map(c => 
+    typeof c === "string" ? { date: c, isFrozen: false } : { date: c.date, isFrozen: !!c.isFrozen }
+  );
+
+  const sorted = mapped.sort((a, b) => b.date.localeCompare(a.date));
   const todayStr = getTodayString();
   const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
   
   // Must have completed today or yesterday to have active streak
-  if (sorted[0] !== todayStr && sorted[0] !== yesterdayStr) return 0;
+  if (sorted[0].date !== todayStr && sorted[0].date !== yesterdayStr) return 0;
   
   let streak = 0;
-  let current = new Date(sorted[0]);
+  let current = new Date(sorted[0].date);
   
-  for (const dateStr of sorted) {
-    const d = new Date(dateStr);
+  for (const comp of sorted) {
+    const d = new Date(comp.date);
     const diff = Math.round((current.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
     if (diff <= 1) {
-      streak++;
+      if (!comp.isFrozen) {
+        streak++;
+      }
       current = d;
     } else {
       break;
@@ -47,7 +54,7 @@ export function calculateXP(
   streaks: number[],
   completionsToday: number
 ): number {
-  let xp = completionsToday * 10;
+  let xp = completionsToday * 5;
   for (const s of streaks) {
     if (s >= 7) xp += 50;
     if (s >= 30) xp += 200;

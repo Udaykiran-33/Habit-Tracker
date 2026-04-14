@@ -38,10 +38,9 @@ export default function HabitsPage() {
       const enriched = raw.map((h: Habit & { frozenStreak?: number; streakFrozen?: boolean }) => ({
         ...h,
         // When frozen, use the server-stored frozenStreak (captured at freeze-time).
-        // When not frozen, compute from completions as usual.
         streak: h.streakFrozen
-          ? (h.frozenStreak ?? calculateStreak(h.completions.map((c: { date: string }) => c.date)))
-          : calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+          ? (h.frozenStreak ?? calculateStreak(h.completions))
+          : calculateStreak(h.completions),
         streakFrozen: h.streakFrozen ?? false,
         frozenStreak: h.frozenStreak ?? 0,
       }));
@@ -88,7 +87,7 @@ export default function HabitsPage() {
     if (wasCompleted) {
       toast("Unmarked", { duration: 1000 });
     } else {
-      toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
+      toast.success("+5 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
     }
 
     setHabits((prev) =>

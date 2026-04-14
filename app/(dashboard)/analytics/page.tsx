@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
   const streakData = habits
     .map((h) => ({
       name: h.name.length > 15 ? h.name.slice(0, 15) + "…" : h.name,
-      streak: calculateStreak(h.completions.map((c) => c.date)),
+      streak: calculateStreak(h.completions),
       color: h.color,
     }))
     .sort((a, b) => b.streak - a.streak)
@@ -160,7 +160,7 @@ export default function AnalyticsPage() {
     h.completions.some((c) => c.date === today)
   ).length;
   const successRate = habits.length > 0 ? Math.round((completedToday / habits.length) * 100) : 0;
-  const bestStreak = Math.max(0, ...habits.map((h) => calculateStreak(h.completions.map((c) => c.date))));
+  const bestStreak = Math.max(0, ...habits.map((h) => calculateStreak(h.completions)));
   const totalCompletions = habits.reduce((sum, h) => sum + h.completions.length, 0);
   const avgCompletionsPerDay = allCompletionDates.size > 0
     ? (totalCompletions / allCompletionDates.size).toFixed(1)

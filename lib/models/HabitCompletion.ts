@@ -4,6 +4,7 @@ export interface IHabitCompletion extends Document {
   habitId: string;
   date: string; // YYYY-MM-DD
   completed: boolean;
+  isFrozen?: boolean;
   createdAt: Date;
 }
 
@@ -12,6 +13,7 @@ const HabitCompletionSchema = new Schema<IHabitCompletion>(
     habitId: { type: String, required: true, index: true },
     date: { type: String, required: true },
     completed: { type: Boolean, default: true },
+    isFrozen: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

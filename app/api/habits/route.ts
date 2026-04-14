@@ -47,7 +47,7 @@ export async function GET() {
     frozenStreak: typeof h.frozenStreak === "number" ? h.frozenStreak : 0,
     completions: completions
       .filter((c: any) => c.habitId === h._id.toString())
-      .map((c: any) => ({ date: c.date })),
+      .map((c: any) => ({ date: c.date, isFrozen: !!c.isFrozen })),
   }));
 
   return NextResponse.json({ habits: habitsWithCompletions });

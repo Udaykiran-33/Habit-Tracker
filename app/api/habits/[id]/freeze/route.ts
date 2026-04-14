@@ -42,7 +42,34 @@ export async function PATCH(
       const completions = await HabitCompletion.find({ habitId: id })
         .sort({ date: -1 })
         .lean();
-      frozenStreak = calculateStreak(completions.map((c) => c.date));
+      frozenStreak = calculateStreak(completions.map((c) => ({ date: c.date, isFrozen: !!(c as any).isFrozen })));
+    } else {
+      // Unfreeze: backfill missing days as frozen
+      const lastCompletion = await HabitCompletion.findOne({ habitId: id }).sort({ date: -1 }).lean();
+      if (lastCompletion) {
+        const todayStr = new Date().toISOString().split("T")[0];
+        const yesterdayDate = new Date(todayStr);
+        yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
+        const yesterdayStr = yesterdayDate.toISOString().split("T")[0];
+
+        let curr = new Date(lastCompletion.date);
+        curr.setUTCDate(curr.getUTCDate() + 1);
+        
+        const docsToInsert = [];
+        while (curr.toISOString().split("T")[0] <= yesterdayStr) {
+          const dStr = curr.toISOString().split("T")[0];
+          docsToInsert.push({ habitId: id, date: dStr, completed: false, isFrozen: true });
+          curr.setUTCDate(curr.getUTCDate() + 1);
+        }
+        
+        if (docsToInsert.length > 0) {
+          try {
+            await HabitCompletion.insertMany(docsToInsert, { ordered: false });
+          } catch(e) {
+            console.error("Ignored duplicate key errors during unfreeze backfill", e);
+          }
+        }
+      }
     }
 
     await Habit.updateOne(

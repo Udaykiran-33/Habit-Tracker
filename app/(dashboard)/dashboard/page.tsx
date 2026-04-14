@@ -80,8 +80,8 @@ export default function DashboardPage() {
       // When frozen, use the server-stored frozenStreak (captured at freeze-time).
       // When not frozen, compute the streak from actual completions.
       streak: h.streakFrozen
-        ? (h.frozenStreak ?? calculateStreak(h.completions.map((c: { date: string }) => c.date)))
-        : calculateStreak(h.completions.map((c: { date: string }) => c.date)),
+        ? (h.frozenStreak ?? calculateStreak(h.completions))
+        : calculateStreak(h.completions),
       streakFrozen: h.streakFrozen ?? false,
       frozenStreak: h.frozenStreak ?? 0,
     }));
@@ -112,7 +112,7 @@ export default function DashboardPage() {
     if (wasCompleted) {
       toast("Unmarked", { duration: 1000 });
     } else {
-      toast.success("+10 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
+      toast.success("+5 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
     }
 
     // --- Optimistic update: flip completions only ---
@@ -136,7 +136,7 @@ export default function DashboardPage() {
       if (!prev) return prev;
       const delta = wasCompleted ? -1 : 1;
       const newCompleted = Math.max(0, prev.completedToday + delta);
-      const newXp = wasCompleted ? Math.max(0, prev.xp - 10) : prev.xp + 10;
+      const newXp = wasCompleted ? Math.max(0, prev.xp - 5) : prev.xp + 5;
       const updatedWeekly = prev.weekly.map((entry) =>
         entry.date === today2
           ? { ...entry, completed: Math.max(0, entry.completed + delta) }
@@ -192,7 +192,7 @@ export default function DashboardPage() {
               successRate: prev.totalHabits > 0
                 ? Math.round((reverted / prev.totalHabits) * 100)
                 : 0,
-              xp: wasCompleted ? prev.xp + 10 : Math.max(0, prev.xp - 10),
+              xp: wasCompleted ? prev.xp + 5 : Math.max(0, prev.xp - 5),
               weekly: revertedWeekly,
             };
           });

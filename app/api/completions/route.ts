@@ -28,11 +28,11 @@ export async function POST(req: NextRequest) {
       // Toggle off — remove completion and deduct XP atomically
       await Promise.all([
         HabitCompletion.deleteOne({ _id: existing._id }),
-        User.updateOne({ _id: session.user.id }, { $inc: { xp: -10 } }),
+        User.updateOne({ _id: session.user.id }, { $inc: { xp: -5 } }),
       ]);
       // Recalculate streak after removal so the client can sync accurately
       const remainingCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
-      const streak = calculateStreak(remainingCompletions.map((c) => c.date));
+      const streak = calculateStreak(remainingCompletions.map(c => ({ date: c.date, isFrozen: !!(c as any).isFrozen })));
       return NextResponse.json({ completed: false, streak });
     }
 
@@ -43,14 +43,14 @@ export async function POST(req: NextRequest) {
     const allHabitCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
 
     // No manual append — targetDate is already in the DB result above
-    const completionDates = allHabitCompletions.map((c) => c.date);
+    const completionDates = allHabitCompletions.map(c => ({ date: c.date, isFrozen: !!(c as any).isFrozen }));
     const streak = calculateStreak(completionDates);
 
 
     // Update XP and level in one query
     const result = await User.findOneAndUpdate(
       { _id: session.user.id },
-      { $inc: { xp: 10 } },
+      { $inc: { xp: 5 } },
       { new: true, select: "xp level" }
     );
 
