@@ -17,34 +17,54 @@ export function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function calculateStreak(completions: any[]): number {
+/**
+ * Calculate a habit streak from completion records.
+ *
+ * Accepts either:
+ *  - `string[]`  (plain date strings, legacy format)
+ *  - `{ date: string; isFrozen?: boolean }[]` (includes frozen-day info)
+ *
+ * Frozen days bridge the gap in a streak (they keep it alive) but do NOT
+ * increment the streak counter themselves.
+ */
+export function calculateStreak(
+  completions: string[] | { date: string; isFrozen?: boolean }[]
+): number {
   if (!completions.length) return 0;
-  
-  const mapped = completions.map(c => 
-    typeof c === "string" ? { date: c, isFrozen: false } : { date: c.date, isFrozen: !!c.isFrozen }
+
+  // Normalise to { date, isFrozen } objects
+  const normalised: { date: string; isFrozen: boolean }[] = completions.map(
+    (c) =>
+      typeof c === "string"
+        ? { date: c, isFrozen: false }
+        : { date: c.date, isFrozen: !!c.isFrozen }
   );
 
-  const sorted = mapped.sort((a, b) => b.date.localeCompare(a.date));
-  const todayStr = getTodayString();
-  const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-  
-  // Must have completed today or yesterday to have active streak
-  if (sorted[0].date !== todayStr && sorted[0].date !== yesterdayStr) return 0;
-  
+  // Sort descending by date
+  normalised.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+
+  const today = getTodayString();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+
+  // The most recent record must be today or yesterday to have an active streak
+  if (normalised[0].date !== today && normalised[0].date !== yesterday) return 0;
+
   let streak = 0;
-  let current = new Date(sorted[0].date);
-  
-  for (const comp of sorted) {
-    const d = new Date(comp.date);
-    const diff = Math.round((current.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff <= 1) {
-      if (!comp.isFrozen) {
-        streak++;
-      }
-      current = d;
-    } else {
-      break;
+  let current = new Date(normalised[0].date + "T00:00:00Z");
+
+  for (const entry of normalised) {
+    const d = new Date(entry.date + "T00:00:00Z");
+    const diff = Math.round(
+      (current.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diff > 1) break; // gap found — streak ends
+
+    current = d;
+
+    // Frozen days bridge the gap but don't count toward the streak number
+    if (!entry.isFrozen) {
+      streak++;
     }
   }
   return streak;
@@ -54,7 +74,7 @@ export function calculateXP(
   streaks: number[],
   completionsToday: number
 ): number {
-  let xp = completionsToday * 5;
+  let xp = completionsToday * 10;
   for (const s of streaks) {
     if (s >= 7) xp += 50;
     if (s >= 30) xp += 200;

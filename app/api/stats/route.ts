@@ -15,7 +15,7 @@ export async function GET() {
   const today = getTodayString();
 
   const user = await User.findById(session.user.id)
-    .select("xp level coins createdAt")
+    .select("xp level")
     .lean();
 
   const habits = await Habit.find({
@@ -31,16 +31,19 @@ export async function GET() {
     .sort({ date: -1 })
     .lean();
 
-  // Group completions by habit
-  const groupedCompletions: Record<string, any[]> = {};
+  // Group completions by habit (with frozen info)
+  const groupedCompletions: Record<string, { date: string; isFrozen: boolean }[]> = {};
+  const groupedDates: Record<string, string[]> = {};
   for (const c of completions) {
     if (!groupedCompletions[c.habitId]) groupedCompletions[c.habitId] = [];
-    groupedCompletions[c.habitId].push({ date: c.date, isFrozen: !!c.isFrozen });
+    groupedCompletions[c.habitId].push({ date: c.date, isFrozen: !!(c as any).isFrozen });
+    if (!groupedDates[c.habitId]) groupedDates[c.habitId] = [];
+    groupedDates[c.habitId].push(c.date);
   }
 
   const totalHabits = habits.length;
   const completedToday = habits.filter((h) =>
-    groupedCompletions[h._id.toString()]?.some((c: any) => c.date === today && !c.isFrozen)
+    groupedDates[h._id.toString()]?.includes(today)
   ).length;
 
   const streaks = habits.map((h) =>
@@ -50,36 +53,19 @@ export async function GET() {
   const successRate =
     totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
 
-  // Weekly data: Monday-based ISO week (Mon–Sun), UTC-consistent
-  // Find Monday of the current UTC week
-  const todayUtcMs = new Date(today + "T00:00:00Z");
-  const utcDay = todayUtcMs.getUTCDay(); // 0=Sun … 6=Sat
-  const daysFromMonday = utcDay === 0 ? 6 : utcDay - 1; // Mon=0 … Sun=6
-  const monday = new Date(todayUtcMs);
-  monday.setUTCDate(monday.getUTCDate() - daysFromMonday);
-
+  // Weekly data (last 7 days)
   const weekly = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday);
-    d.setUTCDate(d.getUTCDate() + i);          // Mon+0, Mon+1, … Mon+6
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().split("T")[0];
-    const isFuture = dateStr > today;           // don't count days not yet reached
-    const count = isFuture
-      ? 0
-      : habits.filter((h) =>
-          groupedCompletions[h._id.toString()]?.some((c: any) => c.date === dateStr && !c.isFrozen)
-        ).length;
-
-    // Calculate how many habits existed on this specific day
-    const habitsExistedOnDay = habits.filter((h) => {
-      const createdAtStr = new Date(h.createdAt).toISOString().split("T")[0];
-      return createdAtStr <= dateStr;
-    }).length;
-
+    const count = habits.filter((h) =>
+      groupedDates[h._id.toString()]?.includes(dateStr)
+    ).length;
     return {
-      day: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+      day: d.toLocaleDateString("en-US", { weekday: "short" }),
       date: dateStr,
       completed: count,
-      total: isFuture ? 0 : habitsExistedOnDay, // only count habits that existed then
+      total: totalHabits,
     };
   });
 
@@ -90,8 +76,6 @@ export async function GET() {
     successRate,
     xp: user?.xp ?? 0,
     level: user?.level ?? 1,
-    coins: user?.coins ?? 0,
-    joinedAt: (user as { createdAt?: Date } | null)?.createdAt?.toISOString() ?? null,
     weekly,
     streaks: habits.map((h, i) => ({
       habitId: h._id.toString(),

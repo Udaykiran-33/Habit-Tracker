@@ -4,7 +4,7 @@ export interface IHabitCompletion extends Document {
   habitId: string;
   date: string; // YYYY-MM-DD
   completed: boolean;
-  isFrozen?: boolean;
+  isFrozen: boolean;
   createdAt: Date;
 }
 

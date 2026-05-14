@@ -72,18 +72,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return session;
     },
-    async redirect({ url, baseUrl }) {
-      // Handle the case where baseUrl might be undefined or missing scheme
-      try {
-        const urlObj = new URL(url);
-        const baseUrlObj = new URL(baseUrl || "http://localhost:3000"); // fallback
-        if (urlObj.origin === baseUrlObj.origin) return url;
-        if (url.startsWith("/")) return `${baseUrlObj.origin}${url}`;
-      } catch (e) {
-        if (url.startsWith("/")) return `${baseUrl}${url}`;
-      }
-      return url;
-    },
   },
   pages: {
     signIn: "/login",

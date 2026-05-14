@@ -15,11 +15,6 @@ export async function PUT(
   const { id } = await params;
   const data = await req.json();
 
-  // Capitalize first letter of name
-  if (data.name) {
-    data.name = data.name.trim().charAt(0).toUpperCase() + data.name.trim().slice(1);
-  }
-
   try {
     await connectDB();
 
@@ -29,6 +24,7 @@ export async function PUT(
         $set: {
           name: data.name,
           category: data.category,
+          frequency: data.frequency,
           color: data.color,
           icon: data.icon,
         },

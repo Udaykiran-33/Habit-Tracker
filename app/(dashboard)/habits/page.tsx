@@ -1,9 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Plus, Search, Filter, Check } from "lucide-react";
+import { Plus, Search, Filter } from "lucide-react";
 import HabitCard from "@/components/habits/HabitCard";
 import AddHabitModal from "@/components/habits/AddHabitModal";
-import CoinUsageModal from "@/components/ui/CoinUsageModal";
 import Button from "@/components/ui/Button";
 import { cn, getTodayString, calculateStreak, HABIT_CATEGORIES } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -12,8 +11,9 @@ interface Habit {
   id: string;
   name: string;
   category: string;
+  frequency: string;
   color: string;
-  completions: { date: string }[];
+  completions: { date: string; isFrozen?: boolean }[];
   streak: number;
   streakFrozen?: boolean;
   frozenStreak?: number;
@@ -25,47 +25,22 @@ export default function HabitsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [modalOpen, setModalOpen] = useState(false);
-  const [coinModalOpen, setCoinModalOpen] = useState(false);
   const [editHabit, setEditHabit] = useState<Habit | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [coins, setCoins] = useState<number | null>(null);
   const today = getTodayString();
 
   const fetchHabits = async () => {
-    try {
-      const res = await fetch("/api/habits");
-      const { habits: raw } = await res.json();
-      const enriched = raw.map((h: Habit & { frozenStreak?: number; streakFrozen?: boolean }) => ({
-        ...h,
-        // When frozen, use the server-stored frozenStreak (captured at freeze-time).
-        streak: h.streakFrozen
-          ? (h.frozenStreak ?? calculateStreak(h.completions))
-          : calculateStreak(h.completions),
-        streakFrozen: h.streakFrozen ?? false,
-        frozenStreak: h.frozenStreak ?? 0,
-      }));
-      setHabits(enriched);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setInitialLoading(false);
-    }
+    const res = await fetch("/api/habits");
+    const { habits: raw } = await res.json();
+    const enriched = raw.map((h: Habit) => ({
+      ...h,
+      streak: h.streakFrozen
+        ? (h.frozenStreak ?? 0)
+        : calculateStreak(h.completions),
+    }));
+    setHabits(enriched);
   };
 
-  const fetchCoins = async () => {
-    try {
-      const res = await fetch("/api/stats");
-      const data = await res.json();
-      setCoins(data.coins ?? 0);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    fetchHabits();
-    fetchCoins();
-  }, []);
+  useEffect(() => { fetchHabits(); }, []);
 
   useEffect(() => {
     let result = [...habits];
@@ -81,80 +56,25 @@ export default function HabitsPage() {
   }, [habits, search, category]);
 
   const handleToggle = async (habitId: string) => {
-    const targetHabit = habits.find((h) => h.id === habitId);
-    const wasCompleted = targetHabit?.completions.some((c) => c.date === today);
-
-    if (wasCompleted) {
-      toast("Unmarked", { duration: 1000 });
-    } else {
-      toast.success("+5 XP", { duration: 1000, icon: <Check size={14} className="text-olive-light" /> });
-    }
-
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === habitId
-          ? {
-              ...h,
-              completions: wasCompleted
-                ? h.completions.filter((c) => c.date !== today)
-                : [...h.completions, { date: today }],
-            }
-          : h
-      )
-    );
-
     const res = await fetch("/api/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ habitId }),
     });
-    if (res.ok) {
-      await fetchHabits();
-      await fetchCoins();
-    } else {
-      // Revert optimistic update on failure
-      fetchHabits();
-      toast.error("Failed to update", { duration: 1000 });
-    }
+    if (res.ok) await fetchHabits();
   };
 
-  // Called when user submits the AddHabitModal form
   const handleSaveHabit = async (data: Partial<Habit & { id?: string }>) => {
-    if (data.id) {
-      // Editing an existing habit — save immediately
-      const res = await fetch(`/api/habits/${data.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (res.ok) {
-        await fetchHabits();
-        toast.success("Habit updated!");
-      }
-    } else {
-      // Creating a new habit — check coins first
-      if ((coins ?? 0) < 1) {
-        toast.error("Insufficient U coins. Maintain consistency to earn more!", { duration: 2500 });
-        return;
-      }
-
-      // Proceed to create the habit
-      const res = await fetch("/api/habits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (res.ok) {
-        // Deduct coin locally and show the CoinUsageModal
-        setCoins((prev) => Math.max(0, (prev ?? 1) - 1));
-        await fetchHabits();
-        setModalOpen(false);
-        setCoinModalOpen(true);
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        toast.error(errData.error || "Failed to create habit", { duration: 2000 });
-      }
+    const method = data.id ? "PUT" : "POST";
+    const url = data.id ? `/api/habits/${data.id}` : "/api/habits";
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      await fetchHabits();
+      toast.success(data.id ? "Habit updated!" : "Habit created!");
     }
   };
 
@@ -166,100 +86,12 @@ export default function HabitsPage() {
     }
   };
 
-  const handleFreezeToggle = async (id: string, freeze: boolean) => {
-    // Optimistic update — figure out what streak value to show while in-flight
-    const currentHabit = habits.find((h) => h.id === id);
-    const optimisticFrozenStreak = freeze ? (currentHabit?.streak ?? 0) : 0;
-
-    setHabits((prev) =>
-      prev.map((h) =>
-        h.id === id
-          ? {
-              ...h,
-              streakFrozen: freeze,
-              frozenStreak: optimisticFrozenStreak,
-              streak: freeze ? (h.streak ?? 0) : h.streak,
-            }
-          : h
-      )
-    );
-
-    const res = await fetch(`/api/habits/${id}/freeze`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ freeze }),
-    });
-
-    if (res.ok) {
-      const data = await res.json().catch(() => ({}));
-      // Commit server's authoritative frozenStreak to state
-      setHabits((prev) =>
-        prev.map((h) =>
-          h.id === id
-            ? {
-                ...h,
-                streakFrozen: data.streakFrozen ?? freeze,
-                frozenStreak: data.frozenStreak ?? optimisticFrozenStreak,
-                streak: freeze
-                  ? (data.frozenStreak ?? optimisticFrozenStreak)
-                  : h.streak,
-              }
-            : h
-        )
-      );
-      if (freeze) {
-        toast.success("Streak frozen ❄️ — your streak is safe!", { duration: 2500 });
-      } else {
-        toast.success("Streak unfrozen 🔥 — keep the momentum!", { duration: 2500 });
-      }
-    } else {
-      // Revert on failure
-      setHabits((prev) =>
-        prev.map((h) =>
-          h.id === id
-            ? { ...h, streakFrozen: !freeze, frozenStreak: currentHabit?.frozenStreak ?? 0 }
-            : h
-        )
-      );
-      toast.error("Failed to update streak freeze");
-    }
-  };
-
-
   const completedCount = habits.filter((h) =>
     h.completions.some((c) => c.date === today)
   ).length;
 
-  if (initialLoading) {
-    return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 animate-pulse">
-        {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
-          <div>
-            <div className="w-48 h-8 bg-surface border border-border rounded-lg mb-2" />
-            <div className="w-32 h-4 bg-surface border border-border rounded-lg" />
-          </div>
-          <div className="w-32 h-10 bg-surface border border-border rounded-lg" />
-        </div>
-
-        {/* Filters Skeleton */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1 h-10 bg-surface border border-border rounded-lg" />
-          <div className="w-full sm:w-48 h-10 bg-surface border border-border rounded-lg" />
-        </div>
-
-        {/* Habits List Skeleton */}
-        <div className="space-y-3 mt-8">
-          <div className="h-24 bg-surface border border-border rounded-xl" />
-          <div className="h-24 bg-surface border border-border rounded-xl" />
-          <div className="h-24 bg-surface border border-border rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto anime-enter">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
@@ -357,7 +189,6 @@ export default function HabitsPage() {
               onToggle={handleToggle}
               onEdit={(h) => { setEditHabit(h as Habit); setModalOpen(true); }}
               onDelete={handleDelete}
-              onFreezeToggle={handleFreezeToggle}
             />
           ))}
         </div>
@@ -368,11 +199,6 @@ export default function HabitsPage() {
         onClose={() => { setModalOpen(false); setEditHabit(null); }}
         onSave={handleSaveHabit}
         editHabit={editHabit}
-      />
-
-      <CoinUsageModal
-        isOpen={coinModalOpen}
-        onClose={() => setCoinModalOpen(false)}
       />
     </div>
   );

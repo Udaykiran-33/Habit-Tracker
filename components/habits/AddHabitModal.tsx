@@ -3,12 +3,13 @@ import { useState, useEffect } from "react";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { cn, HABIT_CATEGORIES } from "@/lib/utils";
+import { cn, HABIT_CATEGORIES, OLIVE_COLORS } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface HabitFormData {
   name: string;
   category: string;
+  frequency: string;
   color: string;
 }
 
@@ -23,6 +24,8 @@ interface AddHabitModalProps {
   editHabit?: Habit | null;
 }
 
+const FREQUENCIES = ["Daily", "Weekly", "3x per week", "Weekdays", "Weekends"];
+
 export default function AddHabitModal({
   isOpen,
   onClose,
@@ -32,30 +35,39 @@ export default function AddHabitModal({
   const [form, setForm] = useState<HabitFormData>({
     name: "",
     category: "General",
+    frequency: "Daily",
     color: "#6b8c3a",
   });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (editHabit) {
       setForm({
         name: editHabit.name,
         category: editHabit.category,
+        frequency: editHabit.frequency,
         color: editHabit.color,
       });
     } else {
-      setForm({ name: "", category: "General", color: "#6b8c3a" });
+      setForm({ name: "", category: "General", frequency: "Daily", color: "#6b8c3a" });
     }
   }, [editHabit, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
       toast.error("Habit name is required");
       return;
     }
-    // Close modal instantly — parent handles optimistic update & errors
-    onSave(editHabit ? { ...form, id: editHabit.id } : form);
-    onClose();
+    setLoading(true);
+    try {
+      await onSave(editHabit ? { ...form, id: editHabit.id } : form);
+      onClose();
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,10 +81,7 @@ export default function AddHabitModal({
           label="Habit Name"
           placeholder="e.g. Morning run, Read 20 pages…"
           value={form.name}
-          onChange={(e) => {
-            const v = e.target.value;
-            setForm((f) => ({ ...f, name: v.charAt(0).toUpperCase() + v.slice(1) }));
-          }}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           autoFocus
         />
 
@@ -93,7 +102,44 @@ export default function AddHabitModal({
         </div>
 
         {/* Frequency */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-foreground">Frequency</label>
+          <div className="flex flex-wrap gap-2">
+            {FREQUENCIES.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setForm((s) => ({ ...s, frequency: f }))}
+                className={cn(
+                  "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                  form.frequency === f
+                    ? "bg-olive/20 border-olive text-olive-light"
+                    : "bg-surface-2 border-border text-muted hover:border-border-hover"
+                )}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
 
+        {/* Color */}
+        <div className="flex flex-col gap-1.5">
+          <label className="text-sm font-medium text-foreground">Color</label>
+          <div className="flex gap-2">
+            {OLIVE_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, color: c }))}
+                className={`w-7 h-7 rounded-full border-2 transition-all ${
+                  form.color === c ? "border-foreground scale-110" : "border-transparent"
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-3 pt-2">
           <Button
@@ -104,7 +150,7 @@ export default function AddHabitModal({
           >
             Cancel
           </Button>
-          <Button type="submit" variant="primary" className="flex-1">
+          <Button type="submit" variant="primary" className="flex-1" loading={loading}>
             {editHabit ? "Save Changes" : "Create Habit"}
           </Button>
         </div>

@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Habit, HabitCompletion, User } from "@/lib/models";
-import { getTodayString, calculateStreak } from "@/lib/utils";
+import { getTodayString } from "@/lib/utils";
 
+// Toggle habit completion for a specific date
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -17,57 +18,61 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     // Verify habit belongs to user
-    const habit = await Habit.findOne({ _id: habitId, userId: session.user.id }).lean();
+    const habit = await Habit.findOne({
+      _id: habitId,
+      userId: session.user.id,
+    });
+
     if (!habit) {
       return NextResponse.json({ error: "Habit not found" }, { status: 404 });
     }
 
-    const existing = await HabitCompletion.findOne({ habitId, date: targetDate }).lean();
+    const existing = await HabitCompletion.findOne({
+      habitId,
+      date: targetDate,
+    });
 
     if (existing) {
-      // Toggle off — remove completion and deduct XP atomically
-      await Promise.all([
-        HabitCompletion.deleteOne({ _id: existing._id }),
-        User.updateOne({ _id: session.user.id }, { $inc: { xp: -5 } }),
-      ]);
-      // Recalculate streak after removal so the client can sync accurately
-      const remainingCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
-      const streak = calculateStreak(remainingCompletions.map(c => ({ date: c.date, isFrozen: !!(c as any).isFrozen })));
-      return NextResponse.json({ completed: false, streak });
-    }
+      // Toggle off
+      await HabitCompletion.deleteOne({ _id: existing._id });
 
-    // Create completion first, THEN fetch all dates.
-    // Do NOT run find+create in parallel — if create finishes before find,
-    // today's date appears in allHabitCompletions AND gets appended again → duplicate → streak = 2.
-    await HabitCompletion.create({ habitId, date: targetDate, completed: true });
-    const allHabitCompletions = await HabitCompletion.find({ habitId }).sort({ date: -1 }).lean();
+      // Deduct XP
+      await User.updateOne(
+        { _id: session.user.id },
+        { $inc: { xp: -10 } }
+      );
 
-    // No manual append — targetDate is already in the DB result above
-    const completionDates = allHabitCompletions.map(c => ({ date: c.date, isFrozen: !!(c as any).isFrozen }));
-    const streak = calculateStreak(completionDates);
+      return NextResponse.json({ completed: false });
+    } else {
+      // Mark complete
+      await HabitCompletion.create({
+        habitId,
+        date: targetDate,
+        completed: true,
+      });
 
+      // Update user XP
+      const result = await User.findOneAndUpdate(
+        { _id: session.user.id },
+        { $inc: { xp: 10 } },
+        { new: true }
+      );
 
-    // Update XP and level in one query
-    const result = await User.findOneAndUpdate(
-      { _id: session.user.id },
-      { $inc: { xp: 5 } },
-      { new: true, select: "xp level" }
-    );
-
-    let leveledUp = false;
-    let newLevel = result?.level ?? 1;
-    if (result) {
-      const computedLevel = Math.floor(result.xp / 100) + 1;
-      if (computedLevel !== result.level) {
-        newLevel = computedLevel;
-        await User.updateOne({ _id: session.user.id }, { $set: { level: newLevel } });
-        leveledUp = newLevel > (result.level ?? 1);
+      // Update level based on XP
+      if (result) {
+        const newLevel = Math.floor(result.xp / 100) + 1;
+        if (newLevel !== result.level) {
+          await User.updateOne(
+            { _id: session.user.id },
+            { $set: { level: newLevel } }
+          );
+        }
       }
-    }
 
-    return NextResponse.json({ completed: true, streak, leveledUp, newLevel });
+      return NextResponse.json({ completed: true });
+    }
   } catch (err) {
-    console.error("[completions POST]", err);
+    console.error(err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

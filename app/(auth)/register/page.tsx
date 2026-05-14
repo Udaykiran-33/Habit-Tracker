@@ -42,7 +42,6 @@ export default function RegisterPage() {
       const data = await res.json();
       if (!res.ok) {
         toast.error(data.error ?? "Registration failed");
-        setLoading(false);
         return;
       }
 
@@ -50,18 +49,19 @@ export default function RegisterPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         redirect: false,
-        callbackUrl: `${window.location.origin}/dashboard`,
       });
 
       if (result?.ok) {
         toast.success("Account created! Welcome to UrHabit 🔥");
-        window.location.href = "/dashboard";
+        router.refresh();
+        router.push("/dashboard");
       } else {
         toast.success("Account created! Please sign in.");
         router.push("/login");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -70,8 +70,8 @@ export default function RegisterPage() {
     <div>
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
-        <div className="w-9 h-9 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
-          <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
+        <div className="w-8 h-8 bg-olive rounded-lg flex items-center justify-center">
+          <Flame size={16} className="text-white" />
         </div>
         <span className="text-foreground font-bold text-xl">
           Ur<span className="text-olive-light">Habit</span>

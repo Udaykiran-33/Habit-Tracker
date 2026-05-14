@@ -45,14 +45,14 @@ export async function PATCH(
       frozenStreak = calculateStreak(completions.map((c) => ({ date: c.date, isFrozen: !!(c as any).isFrozen })));
     } else {
       // Unfreeze: backfill missing days as frozen
-      const lastCompletion = await HabitCompletion.findOne({ habitId: id }).sort({ date: -1 }).lean();
-      if (lastCompletion) {
+      const lastRealCompletion = await HabitCompletion.findOne({ habitId: id, isFrozen: { $ne: true } }).sort({ date: -1 }).lean();
+      if (lastRealCompletion) {
         const todayStr = new Date().toISOString().split("T")[0];
-        const yesterdayDate = new Date(todayStr);
+        const yesterdayDate = new Date(todayStr + "T00:00:00Z");
         yesterdayDate.setUTCDate(yesterdayDate.getUTCDate() - 1);
         const yesterdayStr = yesterdayDate.toISOString().split("T")[0];
 
-        let curr = new Date(lastCompletion.date);
+        let curr = new Date(lastRealCompletion.date + "T00:00:00Z");
         curr.setUTCDate(curr.getUTCDate() + 1);
         
         const docsToInsert = [];

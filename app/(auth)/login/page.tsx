@@ -25,19 +25,18 @@ export default function LoginPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         redirect: false,
-        callbackUrl: `${window.location.origin}/dashboard`,
       });
 
       if (result?.error) {
         toast.error("Invalid email or password");
-        setLoading(false);
       } else if (result?.ok) {
         toast.success("Welcome back!");
-        // The fastest way to hard-refresh state and bounce to dashboard
-        window.location.href = "/dashboard";
+        router.refresh();
+        router.push("/dashboard");
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
+    } finally {
       setLoading(false);
     }
   };
@@ -46,8 +45,8 @@ export default function LoginPage() {
     <div>
       {/* Mobile logo */}
       <div className="flex items-center gap-2 mb-8 lg:hidden">
-        <div className="w-9 h-9 flex items-center justify-center" style={{ borderRadius: "8px", overflow: "hidden" }}>
-          <img src="/logo.png" alt="UrHabit Logo" className="w-full h-full object-contain" />
+        <div className="w-8 h-8 bg-olive rounded-lg flex items-center justify-center">
+          <Flame size={16} className="text-white" />
         </div>
         <span className="text-foreground font-bold text-xl">
           Ur<span className="text-olive-light">Habit</span>
